@@ -62,7 +62,8 @@ class SuperInstallerApp:
     def __init__(self, root):
         self.root = root
         self.root.title("⚡ Mühendis Süper Kurulum Merkezi v2.5")
-        self.root.geometry("1200x820")
+        win_h = min(900, max(700, self.root.winfo_screenheight() - 90))
+        self.root.geometry(f"1200x{win_h}")
         self.root.minsize(1050, 700)
         self.root.configure(bg=THEME["bg_main"])
 
@@ -149,11 +150,41 @@ class SuperInstallerApp:
                         lightcolor=THEME["accent_green"],
                         bordercolor=THEME["border"],
                         thickness=14)
+        # Koyu kaydırma çubuğu
+        style.configure("Dark.Vertical.TScrollbar",
+                        troughcolor=THEME["bg_main"],
+                        background=THEME["border_light"],
+                        bordercolor=THEME["bg_main"],
+                        arrowcolor=THEME["text_muted"],
+                        lightcolor=THEME["border_light"],
+                        darkcolor=THEME["border_light"])
+        style.map("Dark.Vertical.TScrollbar",
+                  background=[("active", THEME["accent_blue"])])
+
+    @staticmethod
+    def add_hover(widget, normal_bg, hover_bg):
+        """Fare üzerine gelince renk değiştirir (devre dışı butonları atlar)"""
+        def _enter(_e):
+            try:
+                if str(widget.cget("state")) != "disabled":
+                    widget.configure(bg=hover_bg)
+            except tk.TclError:
+                widget.configure(bg=hover_bg)
+        def _leave(_e):
+            try:
+                if str(widget.cget("state")) != "disabled":
+                    widget.configure(bg=normal_bg)
+            except tk.TclError:
+                widget.configure(bg=normal_bg)
+        widget.bind("<Enter>", _enter, add="+")
+        widget.bind("<Leave>", _leave, add="+")
 
     def build_ui(self):
         # 1. ÜST BAŞLIK (HEADER)
         header_frame = tk.Frame(self.root, bg=THEME["bg_darkest"], padx=20, pady=14, relief="flat", highlightbackground=THEME["border"], highlightthickness=1)
         header_frame.pack(side="top", fill="x")
+        # Başlığın altında ince vurgu çizgisi
+        tk.Frame(self.root, height=2, bg=THEME["accent_blue"]).pack(side="top", fill="x")
 
         # Sol Başlık
         title_box = tk.Frame(header_frame, bg=THEME["bg_darkest"])
@@ -217,7 +248,7 @@ class SuperInstallerApp:
         self.cat_buttons = {}
         for cat in CATEGORIES:
             btn_frame = tk.Frame(sidebar, bg=THEME["bg_panel"], cursor="hand2")
-            btn_frame.pack(fill="x", pady=2)
+            btn_frame.pack(fill="x", pady=1)
 
             btn = tk.Label(
                 btn_frame,
@@ -226,7 +257,7 @@ class SuperInstallerApp:
                 fg=THEME["accent_blue"] if cat["id"] == "all" else THEME["text_secondary"],
                 bg=THEME["bg_card"] if cat["id"] == "all" else THEME["bg_panel"],
                 padx=10,
-                pady=6,
+                pady=4,
                 anchor="w",
                 cursor="hand2"
             )
@@ -239,7 +270,7 @@ class SuperInstallerApp:
                 fg=THEME["text_muted"],
                 bg=THEME["bg_card"] if cat["id"] == "all" else THEME["bg_panel"],
                 padx=6,
-                pady=6
+                pady=4
             )
             badge.pack(side="right")
 
@@ -252,26 +283,32 @@ class SuperInstallerApp:
 
         # Ayırıcı
         sep = tk.Frame(sidebar, height=1, bg=THEME["border"])
-        sep.pack(fill="x", pady=12)
+        sep.pack(fill="x", pady=8)
 
         # Hazır Şablonlar / Profiller (Presets)
         preset_head = tk.Label(sidebar, text="HAZIR PROFİLLER", font=("Segoe UI", 9, "bold"), fg=THEME["text_muted"], bg=THEME["bg_panel"])
         preset_head.pack(anchor="w", pady=(0, 6))
 
         presets_list = [
-            ("all", "🌟 Tümünü Seç (Full Pack)"),
-            ("ai_engineer", "🤖 Yapay Zeka & ML"),
-            ("cyber_security", "🛡️ Siber Güvenlik & Pentest"),
-            ("design_media", "🎨 Tasarım & 3D Modelleme"),
-            ("hardware_embedded", "⚡ Donanım & Gömülü"),
-            ("software_fullstack", "💻 Yazılım & Full-Stack"),
-            ("devops_cloud", "☁️ DevOps & Bulut"),
-            ("none", "🧹 Seçimleri Temizle"),
+            ("all", "🌟 Tümünü Seç"),
+            ("none", "🧹 Temizle"),
+            ("ai_engineer", "🤖 Yapay Zeka"),
+            ("cyber_security", "🛡️ Siber Güvenlik"),
+            ("design_media", "🎨 Tasarım & 3D"),
+            ("hardware_embedded", "⚡ Donanım"),
+            ("software_fullstack", "💻 Yazılım"),
+            ("devops_cloud", "☁️ DevOps"),
         ]
 
-        for p_key, p_title in presets_list:
+        # Profiller 2 sütunlu ızgarada: sol panele sığar
+        preset_grid = tk.Frame(sidebar, bg=THEME["bg_panel"])
+        preset_grid.pack(fill="x")
+        preset_grid.columnconfigure(0, weight=1, uniform="preset")
+        preset_grid.columnconfigure(1, weight=1, uniform="preset")
+
+        for i, (p_key, p_title) in enumerate(presets_list):
             p_btn = tk.Button(
-                sidebar,
+                preset_grid,
                 text=p_title,
                 font=("Segoe UI", 8),
                 fg=THEME["text_primary"],
@@ -285,11 +322,13 @@ class SuperInstallerApp:
                 cursor="hand2",
                 command=lambda k=p_key: self.apply_preset(k)
             )
-            p_btn.pack(fill="x", pady=2)
+            p_btn.grid(row=i // 2, column=i % 2, sticky="ew", padx=2, pady=2)
+            self.add_hover(p_btn, THEME["bg_card"], THEME["bg_card_hover"])
 
         # Sol Panel Alt İstatistik Kutusu
-        stat_box = tk.Frame(sidebar, bg=THEME["bg_card"], highlightbackground=THEME["border"], highlightthickness=1, padx=10, pady=10)
-        stat_box.pack(side="bottom", fill="x", pady=(10, 0))
+        stat_box = tk.Frame(sidebar, bg=THEME["bg_card"], highlightbackground=THEME["border"], highlightthickness=1, padx=10, pady=8)
+        # before=cat_head: alt kutu önce yer ayırır, küçük pencerede kesilmez
+        stat_box.pack(side="bottom", fill="x", pady=(6, 0), before=cat_head)
 
         self.stat_label = tk.Label(
             stat_box,
@@ -347,6 +386,7 @@ class SuperInstallerApp:
             command=self.select_current_category
         )
         select_all_btn.pack(side="left", padx=4)
+        self.add_hover(select_all_btn, THEME["bg_panel"], THEME["bg_card_hover"])
 
         deselect_all_btn = tk.Button(
             quick_select_box,
@@ -363,13 +403,15 @@ class SuperInstallerApp:
             command=self.deselect_current_category
         )
         deselect_all_btn.pack(side="left", padx=4)
+        self.add_hover(deselect_all_btn, THEME["bg_panel"], THEME["bg_card_hover"])
 
         # Kaydırılabilir Kart Alanı (Canvas + Scrollbar)
         list_container = tk.Frame(content_frame, bg=THEME["bg_main"], padx=16, pady=4)
         list_container.pack(fill="both", expand=True)
 
         self.canvas = tk.Canvas(list_container, bg=THEME["bg_main"], highlightthickness=0)
-        self.scrollbar = ttk.Scrollbar(list_container, orient="vertical", command=self.canvas.yview)
+        self.scrollbar = ttk.Scrollbar(list_container, orient="vertical", command=self.canvas.yview,
+                                       style="Dark.Vertical.TScrollbar")
 
         self.scrollable_frame = tk.Frame(self.canvas, bg=THEME["bg_main"])
         self.scrollable_frame.bind(
@@ -436,6 +478,7 @@ class SuperInstallerApp:
             command=self.toggle_terminal
         )
         self.terminal_toggle_btn.pack(side="left", padx=6)
+        self.add_hover(self.terminal_toggle_btn, THEME["bg_card"], THEME["bg_card_hover"])
 
         self.cancel_btn = tk.Button(
             btn_action_box,
@@ -467,6 +510,7 @@ class SuperInstallerApp:
             command=self.start_installation
         )
         self.install_btn.pack(side="left", padx=6)
+        self.add_hover(self.install_btn, THEME["accent_green"], "#16a34a")
 
         # 4. CANLI TERMİNAL ÇIKTI KUTUSU (DRAWER)
         self.terminal_frame = tk.Frame(footer_frame, bg=THEME["terminal_bg"], highlightbackground=THEME["border"], highlightthickness=1)
@@ -496,7 +540,7 @@ class SuperInstallerApp:
             bg=THEME["terminal_bg"],
             fg=THEME["terminal_fg"],
             insertbackground=THEME["terminal_fg"],
-            height=7,
+            height=4,
             relief="flat",
             wrap="char"
         )
@@ -669,7 +713,9 @@ class SuperInstallerApp:
             variable=var,
             text="",
             bg=card.cget("bg"),
+            fg=THEME["accent_green"],
             activebackground=card.cget("bg"),
+            activeforeground=THEME["accent_green"],
             selectcolor=THEME["bg_darkest"],
             relief="flat",
             cursor="hand2"
@@ -747,6 +793,21 @@ class SuperInstallerApp:
         )
         status_lbl.pack(side="right")
         self.status_labels[pid] = status_lbl
+
+        # Kartın her yerine tıklayınca seç / kaldır
+        for w in (card, left_box, top_line, type_badge, status_lbl):
+            w.bind("<Button-1>", _toggle)
+            w.configure(cursor="hand2")
+
+        # Üzerine gelince hafif vurgu (seçili değilse)
+        def _card_enter(_e):
+            if not var.get():
+                card.configure(highlightbackground=THEME["border_light"])
+        def _card_leave(_e):
+            if not var.get():
+                card.configure(highlightbackground=THEME["border"])
+        card.bind("<Enter>", _card_enter)
+        card.bind("<Leave>", _card_leave)
 
         # Checkbox değiştiğinde kart rengini dinamik güncelle
         def _on_val_change(*args):
