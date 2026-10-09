@@ -3,6 +3,7 @@
 ## [3.0.0]
 - Proje adı **Atölye** oldu.
 - Apple tarzı açık tema, sade başlık, arama kutusunda yer tutucu metin.
+- Yumuşak görünüm: yuvarlak köşeli kartlar, düğmeler, arama alanı ve istatistik kutusu; neredeyse görünmez kenarlıklar.
 - Kartın her yerine tıklayarak seçme, hover efektleri, koyu kaydırma çubuğu.
 - Hazır profiller 2 sütunlu ızgaraya taşındı, alt istatistik kutusu kesilmiyor.
 - Git klonlamada `core.longpaths` açıldı (Windows uzun yol hatası düzeltildi).

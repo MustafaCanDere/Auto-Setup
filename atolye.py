@@ -16,6 +16,7 @@ import subprocess
 import urllib.request
 import zipfile
 import tkinter as tk
+import tkinter.font as tkfont
 from tkinter import ttk, messagebox
 
 # Windows DPI Awareness
@@ -38,14 +39,15 @@ CONFIG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "secilenl
 
 # Renk Paleti (Apple tarzı açık tema)
 THEME = {
-    "bg_darkest": "#ffffff",       # üst başlık
+    "bg_darkest": "#f5f5f7",       # üst başlık (ana zeminle aynı, yumuşak geçiş)
     "bg_main": "#f5f5f7",          # ana zemin
-    "bg_panel": "#ececf1",         # kenar çubuğu ve alt panel
+    "bg_panel": "#ededf2",         # kenar çubuğu ve alt panel
     "bg_card": "#ffffff",
-    "bg_card_hover": "#f2f2f7",
-    "bg_card_selected": "#eaf3ff",
-    "border": "#e0e0e6",
-    "border_light": "#c7c7cc",
+    "bg_card_hover": "#f4f4f8",
+    "bg_card_selected": "#eef5ff",
+    "border": "#ececf1",           # neredeyse görünmez kart kenarı
+    "border_light": "#d9d9e0",
+    "border_selected": "#a9cdf7",  # seçili kartın yumuşak mavi kenarı
     "accent_blue": "#0071e3",
     "accent_blue_dark": "#0062c4",
     "accent_purple": "#8944ab",
@@ -59,6 +61,116 @@ THEME = {
     "terminal_header": "#2c2c2e",
     "terminal_fg": "#30d158",
 }
+
+def _round_rect(cv, x1, y1, x2, y2, r, **kw):
+    """Canvas üzerinde yuvarlak köşeli dikdörtgen çizer."""
+    r = max(0, min(r, (x2 - x1) / 2, (y2 - y1) / 2))
+    pts = [x1 + r, y1, x2 - r, y1, x2, y1, x2, y1 + r, x2, y2 - r, x2, y2,
+           x2 - r, y2, x1 + r, y2, x1, y2, x1, y2 - r, x1, y1 + r, x1, y1]
+    return cv.create_polygon(pts, smooth=True, **kw)
+
+
+class RoundedFrame(tk.Canvas):
+    """Yuvarlak köşeli çerçeve. İçerik `.body` çerçevesine eklenir."""
+
+    def __init__(self, parent, fill, outline=None, radius=14, pad=(16, 12), width=200):
+        super().__init__(parent, bg=parent.cget("bg"), highlightthickness=0, bd=0, width=width, height=20)
+        self.radius = radius
+        self._fill = fill
+        self._outline = outline or fill
+        self._pad = pad
+        self._shape = None
+        self.body = tk.Frame(self, bg=fill)
+        self._win = self.create_window(pad[0], pad[1], window=self.body, anchor="nw")
+        self.bind("<Configure>", self._on_resize)
+        self.body.bind("<Configure>", self._on_body)
+
+    def _on_body(self, _e):
+        self.configure(height=self.body.winfo_reqheight() + 2 * self._pad[1])
+
+    def _on_resize(self, e):
+        self.itemconfigure(self._win, width=max(1, e.width - 2 * self._pad[0]))
+        self._redraw(e.width, e.height)
+
+    def _redraw(self, w, h):
+        if self._shape is not None:
+            self.delete(self._shape)
+        self._shape = _round_rect(self, 1, 1, w - 1, h - 1, self.radius,
+                                  fill=self._fill, outline=self._outline, width=1)
+        self.tag_lower(self._shape)
+
+    def set_colors(self, fill, outline=None):
+        self._fill = fill
+        self._outline = outline or fill
+        self.body.configure(bg=fill)
+        if self._shape is not None:
+            self.itemconfigure(self._shape, fill=self._fill, outline=self._outline)
+
+
+class RoundedButton(tk.Canvas):
+    """Yuvarlak köşeli, tk.Button gibi davranan düğme (text, bg, fg, state, command)."""
+
+    def __init__(self, parent, text, command=None, bg="#0071e3", fg="#ffffff",
+                 font=("Segoe UI", 9), radius=10, padx=16, pady=7,
+                 disabled_fg="#86868b", parent_bg=None):
+        self._font = tkfont.Font(font=font)
+        self._padx = padx
+        self._text, self._command = text, command
+        self._bg, self._fg, self._disabled_fg = bg, fg, disabled_fg
+        self._state, self._radius = "normal", radius
+        w = self._font.measure(text) + 2 * padx
+        h = self._font.metrics("linespace") + 2 * pady
+        super().__init__(parent, width=w, height=h, bg=parent_bg or parent.cget("bg"),
+                         highlightthickness=0, bd=0, cursor="hand2")
+        self.bind("<Configure>", lambda _e: self._draw())
+        self.bind("<Button-1>", self._click)
+
+    def _draw(self):
+        w = self.winfo_width()
+        h = self.winfo_height()
+        if w < 2 or h < 2:
+            return
+        self.delete("all")
+        fg = self._fg if self._state == "normal" else self._disabled_fg
+        _round_rect(self, 0, 0, w, h, self._radius, fill=self._bg, outline=self._bg)
+        self.create_text(w / 2, h / 2, text=self._text, fill=fg, font=self._font)
+
+    def _click(self, _e):
+        if self._state == "normal" and self._command:
+            self._command()
+
+    def cget(self, key):
+        if key == "state":
+            return self._state
+        return super().cget(key)
+
+    def configure(self, cnf=None, **kw):
+        changed = False
+        if "text" in kw:
+            self._text = kw.pop("text")
+            need = self._font.measure(self._text) + 2 * self._padx
+            if need > int(float(super().cget("width"))):
+                super().configure(width=need)
+            changed = True
+        if "bg" in kw:
+            self._bg = kw.pop("bg")
+            changed = True
+        if "fg" in kw:
+            self._fg = kw.pop("fg")
+            changed = True
+        if "command" in kw:
+            self._command = kw.pop("command")
+        if "state" in kw:
+            self._state = kw.pop("state")
+            super().configure(cursor="hand2" if self._state == "normal" else "arrow")
+            changed = True
+        if kw or cnf:
+            super().configure(cnf, **kw)
+        if changed:
+            self._draw()
+
+    config = configure
+
 
 class SuperInstallerApp:
     def __init__(self, root):
@@ -151,7 +263,7 @@ class SuperInstallerApp:
                         darkcolor=THEME["accent_blue"],
                         lightcolor=THEME["accent_blue"],
                         bordercolor=THEME["border"],
-                        thickness=14)
+                        thickness=8)
         # Koyu kaydırma çubuğu
         style.configure("Dark.Vertical.TScrollbar",
                         troughcolor=THEME["bg_main"],
@@ -216,8 +328,9 @@ class SuperInstallerApp:
 
         # Arama Çubuğu
         search_bg = "#e8e8ed"
-        search_frame = tk.Frame(top_right, bg=search_bg, padx=12, pady=7)
-        search_frame.pack(side="right", padx=(15, 0), pady=4)
+        search_pill = RoundedFrame(top_right, fill=search_bg, radius=16, pad=(14, 7), width=340)
+        search_pill.pack(side="right", padx=(15, 0), pady=4)
+        search_frame = search_pill.body
 
         search_icon = tk.Label(search_frame, text="🔍", font=("Segoe UI", 10), fg=THEME["text_muted"], bg=search_bg)
         search_icon.pack(side="left")
@@ -230,10 +343,10 @@ class SuperInstallerApp:
             fg=THEME["text_muted"],
             insertbackground=THEME["text_primary"],
             relief="flat",
-            width=32
+            width=30
         )
         self.search_entry.insert(0, self.search_placeholder)
-        self.search_entry.pack(side="left", padx=6)
+        self.search_entry.pack(side="left", padx=6, fill="x", expand=True)
 
         def _focus_in(_e):
             if self.search_entry.get() == self.search_placeholder:
@@ -325,28 +438,26 @@ class SuperInstallerApp:
         preset_grid.columnconfigure(1, weight=1, uniform="preset")
 
         for i, (p_key, p_title) in enumerate(presets_list):
-            p_btn = tk.Button(
+            p_btn = RoundedButton(
                 preset_grid,
                 text=p_title,
-                font=("Segoe UI", 8),
-                fg=THEME["text_primary"],
+                command=lambda k=p_key: self.apply_preset(k),
                 bg=THEME["bg_card"],
-                activebackground=THEME["bg_card_hover"],
-                activeforeground=THEME["text_primary"],
-                relief="flat",
-                anchor="w",
+                fg=THEME["text_primary"],
+                font=("Segoe UI", 9),
+                radius=12,
                 padx=8,
-                pady=4,
-                cursor="hand2",
-                command=lambda k=p_key: self.apply_preset(k)
+                pady=7,
+                parent_bg=THEME["bg_panel"]
             )
-            p_btn.grid(row=i // 2, column=i % 2, sticky="ew", padx=2, pady=2)
+            p_btn.grid(row=i // 2, column=i % 2, sticky="ew", padx=3, pady=3)
             self.add_hover(p_btn, THEME["bg_card"], THEME["bg_card_hover"])
 
         # Sol Panel Alt İstatistik Kutusu
-        stat_box = tk.Frame(sidebar, bg=THEME["bg_card"], highlightbackground=THEME["border"], highlightthickness=1, padx=10, pady=8)
+        stat_card = RoundedFrame(sidebar, fill=THEME["bg_card"], radius=14, pad=(14, 10), width=240)
         # before=cat_head: alt kutu önce yer ayırır, küçük pencerede kesilmez
-        stat_box.pack(side="bottom", fill="x", pady=(6, 0), before=cat_head)
+        stat_card.pack(side="bottom", fill="x", pady=(6, 0), before=cat_head)
+        stat_box = stat_card.body
 
         self.stat_label = tk.Label(
             stat_box,
@@ -389,39 +500,35 @@ class SuperInstallerApp:
         quick_select_box = tk.Frame(content_toolbar, bg=THEME["bg_main"])
         quick_select_box.pack(side="right")
 
-        select_all_btn = tk.Button(
+        select_all_btn = RoundedButton(
             quick_select_box,
             text="✓ Bu Bölümü Seç",
-            font=("Segoe UI", 8, "bold"),
+            command=self.select_current_category,
+            bg=THEME["bg_card"],
             fg=THEME["accent_blue"],
-            bg=THEME["bg_panel"],
-            activebackground=THEME["bg_card"],
-            activeforeground=THEME["text_primary"],
-            relief="flat",
-            padx=10,
-            pady=3,
-            cursor="hand2",
-            command=self.select_current_category
+            font=("Segoe UI", 9, "bold"),
+            radius=14,
+            padx=14,
+            pady=6,
+            parent_bg=THEME["bg_main"]
         )
         select_all_btn.pack(side="left", padx=4)
-        self.add_hover(select_all_btn, THEME["bg_panel"], THEME["bg_card_hover"])
+        self.add_hover(select_all_btn, THEME["bg_card"], THEME["bg_card_hover"])
 
-        deselect_all_btn = tk.Button(
+        deselect_all_btn = RoundedButton(
             quick_select_box,
             text="✕ Bu Bölümü Kaldır",
-            font=("Segoe UI", 8),
+            command=self.deselect_current_category,
+            bg=THEME["bg_card"],
             fg=THEME["text_secondary"],
-            bg=THEME["bg_panel"],
-            activebackground=THEME["bg_card"],
-            activeforeground=THEME["text_primary"],
-            relief="flat",
-            padx=10,
-            pady=3,
-            cursor="hand2",
-            command=self.deselect_current_category
+            font=("Segoe UI", 9),
+            radius=14,
+            padx=14,
+            pady=6,
+            parent_bg=THEME["bg_main"]
         )
         deselect_all_btn.pack(side="left", padx=4)
-        self.add_hover(deselect_all_btn, THEME["bg_panel"], THEME["bg_card_hover"])
+        self.add_hover(deselect_all_btn, THEME["bg_card"], THEME["bg_card_hover"])
 
         # Kaydırılabilir Kart Alanı (Canvas + Scrollbar)
         list_container = tk.Frame(content_frame, bg=THEME["bg_main"], padx=16, pady=4)
@@ -448,7 +555,7 @@ class SuperInstallerApp:
         self.canvas.bind("<Configure>", self._on_canvas_configure)
 
         # 3. ALT KONTROL & TERMİNAL ALANI (FOOTER)
-        footer_frame = tk.Frame(self.root, bg=THEME["bg_panel"], padx=18, pady=10, highlightbackground=THEME["border"], highlightthickness=1)
+        footer_frame = tk.Frame(self.root, bg=THEME["bg_panel"], padx=22, pady=12)
         footer_frame.pack(side="bottom", fill="x")
 
         # Alt Kontrol Çubuğu (Butonlar + İlerleme)
@@ -481,58 +588,54 @@ class SuperInstallerApp:
         btn_action_box = tk.Frame(control_bar, bg=THEME["bg_panel"])
         btn_action_box.pack(side="right")
 
-        self.terminal_toggle_btn = tk.Button(
+        self.terminal_toggle_btn = RoundedButton(
             btn_action_box,
             text="📋 Konsolu Gizle",
-            font=("Segoe UI", 9),
-            fg=THEME["text_secondary"],
+            command=self.toggle_terminal,
             bg=THEME["bg_card"],
-            activebackground=THEME["bg_card_hover"],
-            activeforeground=THEME["text_primary"],
-            relief="flat",
-            padx=12,
-            pady=6,
-            cursor="hand2",
-            command=self.toggle_terminal
+            fg=THEME["text_secondary"],
+            font=("Segoe UI", 9),
+            radius=16,
+            padx=16,
+            pady=8,
+            parent_bg=THEME["bg_panel"]
         )
         self.terminal_toggle_btn.pack(side="left", padx=6)
         self.add_hover(self.terminal_toggle_btn, THEME["bg_card"], THEME["bg_card_hover"])
 
-        self.cancel_btn = tk.Button(
+        self.cancel_btn = RoundedButton(
             btn_action_box,
-            text="⏹️ İptal Et",
-            font=("Segoe UI", 9, "bold"),
-            fg=THEME["text_primary"],
+            text="İptal Et",
+            command=self.cancel_installation,
             bg=THEME["bg_card"],
-            activebackground=THEME["accent_red"],
-            relief="flat",
-            padx=12,
-            pady=6,
-            state="disabled",
-            command=self.cancel_installation
+            fg=THEME["accent_red"],
+            font=("Segoe UI", 9, "bold"),
+            radius=16,
+            padx=16,
+            pady=8,
+            parent_bg=THEME["bg_panel"]
         )
+        self.cancel_btn.configure(state="disabled")
         self.cancel_btn.pack(side="left", padx=6)
 
-        self.install_btn = tk.Button(
+        self.install_btn = RoundedButton(
             btn_action_box,
-            text="SEÇİLENLERİ KUR (0)",
-            font=("Segoe UI", 10, "bold"),
-            fg="#ffffff",
+            text="SEÇİLENLERİ KUR (222)",
+            command=self.start_installation,
             bg=THEME["accent_blue"],
-            activebackground=THEME["accent_blue_dark"],
-            activeforeground="#ffffff",
-            disabledforeground=THEME["text_muted"],
-            relief="flat",
-            padx=20,
-            pady=6,
-            cursor="hand2",
-            command=self.start_installation
+            fg="#ffffff",
+            font=("Segoe UI", 10, "bold"),
+            radius=18,
+            padx=24,
+            pady=9,
+            parent_bg=THEME["bg_panel"]
         )
+        self.install_btn.configure(text="SEÇİLENLERİ KUR (0)")
         self.install_btn.pack(side="left", padx=6)
         self.add_hover(self.install_btn, THEME["accent_blue"], THEME["accent_blue_dark"])
 
         # 4. CANLI TERMİNAL ÇIKTI KUTUSU (DRAWER)
-        self.terminal_frame = tk.Frame(footer_frame, bg=THEME["terminal_bg"], highlightbackground=THEME["border"], highlightthickness=1)
+        self.terminal_frame = tk.Frame(footer_frame, bg=THEME["terminal_bg"])
         self.terminal_frame.pack(fill="x", pady=(6, 0))
 
         terminal_header = tk.Frame(self.terminal_frame, bg=THEME["terminal_header"], padx=8, pady=3)
@@ -711,15 +814,15 @@ class SuperInstallerApp:
         var = self.selected_vars[pid]
 
         # Kart Çerçevesi
-        card = tk.Frame(
+        rcard = RoundedFrame(
             self.scrollable_frame,
-            bg=THEME["bg_card_selected"] if var.get() else THEME["bg_card"],
-            highlightbackground=THEME["accent_blue"] if var.get() else THEME["border"],
-            highlightthickness=1,
-            padx=16,
-            pady=12
+            fill=THEME["bg_card_selected"] if var.get() else THEME["bg_card"],
+            outline=THEME["border_selected"] if var.get() else THEME["border"],
+            radius=16,
+            pad=(18, 13)
         )
-        self.card_frames[pid] = card
+        self.card_frames[pid] = rcard
+        card = rcard.body
 
         # Sol: Checkbox ve Bilgiler
         left_box = tk.Frame(card, bg=card.cget("bg"))
@@ -817,28 +920,36 @@ class SuperInstallerApp:
         self.status_labels[pid] = status_lbl
 
         # Kartın her yerine tıklayınca seç / kaldır
-        for w in (card, left_box, top_line, type_badge, status_lbl):
+        for w in (rcard, card, left_box, top_line, type_badge, status_lbl):
             w.bind("<Button-1>", _toggle)
             w.configure(cursor="hand2")
 
         # Üzerine gelince hafif vurgu (seçili değilse)
+        def _pointer_inside():
+            x, y = rcard.winfo_pointerxy()
+            return (rcard.winfo_rootx() <= x < rcard.winfo_rootx() + rcard.winfo_width()
+                    and rcard.winfo_rooty() <= y < rcard.winfo_rooty() + rcard.winfo_height())
+
         def _card_enter(_e):
             if not var.get():
-                card.configure(highlightbackground=THEME["border_light"])
+                rcard.set_colors(THEME["bg_card"], THEME["border_light"])
+
         def _card_leave(_e):
-            if not var.get():
-                card.configure(highlightbackground=THEME["border"])
-        card.bind("<Enter>", _card_enter)
-        card.bind("<Leave>", _card_leave)
+            if not var.get() and not _pointer_inside():
+                rcard.set_colors(THEME["bg_card"], THEME["border"])
+
+        for w in (rcard, card):
+            w.bind("<Enter>", _card_enter, add="+")
+            w.bind("<Leave>", _card_leave, add="+")
 
         # Checkbox değiştiğinde kart rengini dinamik güncelle
         def _on_val_change(*args):
-            if not card.winfo_exists():
+            if not rcard.winfo_exists():
                 return
             is_checked = var.get()
             bg_c = THEME["bg_card_selected"] if is_checked else THEME["bg_card"]
-            border_c = THEME["accent_blue"] if is_checked else THEME["border"]
-            card.configure(bg=bg_c, highlightbackground=border_c)
+            border_c = THEME["border_selected"] if is_checked else THEME["border"]
+            rcard.set_colors(bg_c, border_c)
             left_box.configure(bg=bg_c)
             top_line.configure(bg=bg_c)
             cb.configure(bg=bg_c, activebackground=bg_c)
