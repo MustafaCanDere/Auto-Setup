@@ -4,7 +4,7 @@
 
 **Mühendisler için kurulum merkezi.** Araçlarını seç, tek tıkla kur.
 
-![Python](https://img.shields.io/badge/Python-3.9%2B-0071e3) ![Platform](https://img.shields.io/badge/Windows-10%20%7C%2011-lightgrey) ![License](https://img.shields.io/badge/Lisans-MIT-34c759) [![CI](https://github.com/KULLANICI_ADIN/atolye/actions/workflows/ci.yml/badge.svg)](https://github.com/KULLANICI_ADIN/atolye/actions)
+![Python](https://img.shields.io/badge/Python-3.9%2B-0071e3) ![Platform](https://img.shields.io/badge/Windows-10%20%7C%2011-lightgrey) ![License](https://img.shields.io/badge/Lisans-MIT-34c759) [![CI](https://github.com/MustafaCanDere/atolye/actions/workflows/ci.yml/badge.svg)](https://github.com/MustafaCanDere/atolye/actions)
 
 ![Atölye arayüzü](docs/screenshot.png)
 
@@ -25,7 +25,7 @@ Yeni bir bilgisayar kurarken onlarca siteye girip tek tek program indirmek zaman
 
 1. Repoyu indir (`Code → Download ZIP`) veya klonla:
    ```bash
-   git clone https://github.com/KULLANICI_ADIN/atolye.git
+   git clone https://github.com/MustafaCanDere/atolye.git
    ```
 2. `ATOLYE_BASLAT.bat` dosyasına çift tıkla. Python yoksa Winget ile kurmayı önerir.
 3. Programları işaretle veya soldan bir profil seç.
@@ -63,7 +63,7 @@ python -m unittest discover -s tests -v
 
 ## Tanıtım sayfası
 
-`docs/index.html` tek dosyalık bir tanıtım sayfasıdır. GitHub'da **Settings → Pages → Branch: `main` / Folder: `/docs`** seçersen `https://KULLANICI_ADIN.github.io/atolye/` adresinde yayınlanır.
+`docs/index.html` tek dosyalık bir tanıtım sayfasıdır. GitHub'da **Settings → Pages → Branch: `main` / Folder: `/docs`** seçersen `https://MustafaCanDere.github.io/atolye/` adresinde yayınlanır.
 
 ## Sorumluluk reddi
 
