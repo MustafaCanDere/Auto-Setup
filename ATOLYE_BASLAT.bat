@@ -1,5 +1,5 @@
 @echo off
-title Muhendis Super Kurulum Merkezi
+title Atolye - Muhendis Kurulum Merkezi
 cd /d "%~dp0"
 call "%~dp0baslat.bat" %*
 if %errorlevel% neq 0 (

@@ -1,57 +1,74 @@
-# ⚡ Mühendis Süper Kurulum Merkezi
+<div align="center">
 
-Mühendisler ve geliştiriciler için **tik tik** seçmeli, Windows'ta tek tıkla çalışan kurulum paketi. İstediğin programları işaretle, **Seçilenleri Kur** butonuna bas, gerisini o halletsin.
+# Atölye
 
-![Python](https://img.shields.io/badge/Python-3.8%2B-blue) ![Platform](https://img.shields.io/badge/Platform-Windows-lightgrey) ![License](https://img.shields.io/badge/License-MIT-green)
+**Mühendisler için kurulum merkezi.** Araçlarını seç, tek tıkla kur.
 
-![Uygulama arayüzü](docs/screenshot.png)
+![Python](https://img.shields.io/badge/Python-3.9%2B-0071e3) ![Platform](https://img.shields.io/badge/Windows-10%20%7C%2011-lightgrey) ![License](https://img.shields.io/badge/Lisans-MIT-34c759) [![CI](https://github.com/KULLANICI_ADIN/atolye/actions/workflows/ci.yml/badge.svg)](https://github.com/KULLANICI_ADIN/atolye/actions)
 
-## ✨ Özellikler
+![Atölye arayüzü](docs/screenshot.png)
 
-- **Harici bağımlılık yok:** Sadece standart Python (Tkinter) kullanır.
-- **222+ araç**, kategorilere ayrılmış: yapay zeka, yazılım, donanım/gömülü, DevOps, tasarım, ofis ve daha fazlası.
-- **Hazır profiller:** Yapay Zeka, Full-Stack, Donanım & IoT, DevOps, Tasarım & 3D ve diğerleri.
-- **Canlı arama ve kategori filtresi.**
-- **GitHub projeleri:** Seçtiğin açık kaynak projeleri klonlar, `requirements.txt` kurar, tek tıkla başlatıcı `.bat` oluşturur.
-- **Seçimlerini hatırlar** (`secilenler.json`).
-- **Sırayla, kararlı kurulum:** İlerleme çubuğu ve canlı terminal çıktısı.
+</div>
 
-## 🚀 Hızlı Başlangıç
+## Neden Atölye?
 
-1. Bu repoyu indir (`Code → Download ZIP`) veya klonla:
+Yeni bir bilgisayar kurarken onlarca siteye girip tek tek program indirmek zaman kaybı. Atölye, mühendislik ve yazılım araçlarını tek pencerede toplar: işaretle, **Seçilenleri Kur**'a bas, gerisini o halletsin.
+
+- **Harici bağımlılık yok.** Sadece standart Python (Tkinter).
+- **222 araç, 9 kategori:** yapay zeka, siber güvenlik, yazılım, DevOps, donanım, tasarım ve daha fazlası.
+- **Hazır profiller:** Yapay Zeka, Siber Güvenlik, Yazılım, DevOps, Donanım, Tasarım. Tek tıkla bir alanın tüm araçlarını seç.
+- **Canlı arama** ve kategori filtresi.
+- **Üç kurulum yolu:** Winget (sistem programları), pip (Python paketleri), git (açık kaynak projeler, `requirements.txt` otomatik kurulur).
+- **Seçimlerini hatırlar** ve kurulumu canlı konsolda gösterir.
+
+## Hızlı başlangıç
+
+1. Repoyu indir (`Code → Download ZIP`) veya klonla:
    ```bash
-   git clone https://github.com/<kullanici-adin>/muhendis-kurulum.git
+   git clone https://github.com/KULLANICI_ADIN/atolye.git
    ```
-2. `KURULUM_BASLAT.bat` dosyasına çift tıkla. Python yoksa Winget ile kurulmasını önerir.
-3. Kurmak istediğin programları işaretle (veya soldan hazır profil seç).
-4. **🚀 SEÇİLENLERİ KUR** butonuna bas.
+2. `ATOLYE_BASLAT.bat` dosyasına çift tıkla. Python yoksa Winget ile kurmayı önerir.
+3. Programları işaretle veya soldan bir profil seç.
+4. **Seçilenleri Kur** butonuna bas.
 
-## 📋 Gereksinimler
+Terminalden çalıştırmak istersen:
 
-- Windows 10/11
+```bash
+python atolye.py
+```
+
+## Gereksinimler
+
+- Windows 10 veya 11
 - [Winget](https://learn.microsoft.com/windows/package-manager/) (Windows 11'de hazır gelir)
-- İnternet bağlantısı
+- 64-bit Python önerilir. 32-bit Python'da PyTorch ve OpenCV gibi büyük paketler kurulamayabilir.
 
-## 📁 Dosyalar
+## Proje yapısı
 
 | Dosya | Görev |
 |---|---|
-| `muhendis_kurulum.py` | Arayüz ve kurulum motoru |
+| `atolye.py` | Arayüz ve kurulum motoru |
 | `programlar_db.py` | Program, kategori ve profil veritabanı |
-| `baslat.bat` / `KURULUM_BASLAT.bat` | Başlatıcılar |
+| `ATOLYE_BASLAT.bat`, `baslat.bat` | Başlatıcılar |
+| `tests/` | Veritabanı tutarlılık testleri |
+| `docs/` | Tanıtım sayfası (GitHub Pages) |
 
-## 🌐 Tanıtım Sayfası
+## Katkı
 
-`docs/index.html` tek dosyalık bir tanıtım sayfasıdır. GitHub'da **Settings → Pages → Branch: `main` / Folder: `/docs`** seçersen `https://<kullanici-adin>.github.io/muhendis-kurulum/` adresinde yayınlanır.
+Yeni program eklemek veya hata bildirmek için [CONTRIBUTING.md](CONTRIBUTING.md) dosyasına bak. Testleri çalıştırmak için:
 
-## ➕ Program Ekleme
+```bash
+python -m unittest discover -s tests -v
+```
 
-`programlar_db.py` içindeki `PROGRAMS` listesine yeni bir kayıt ekle, uygulama bir sonraki açılışta onu gösterir.
+## Tanıtım sayfası
 
-## ⚠️ Sorumluluk Reddi
+`docs/index.html` tek dosyalık bir tanıtım sayfasıdır. GitHub'da **Settings → Pages → Branch: `main` / Folder: `/docs`** seçersen `https://KULLANICI_ADIN.github.io/atolye/` adresinde yayınlanır.
 
-Listede siber güvenlik ve pentest araçları da bulunur. Bunları **sadece kendi sistemlerinde veya yazılı izin aldığın ortamlarda** kullan. Kurulan her programın lisansı kendi sahibine aittir. Bu proje programların kendisini dağıtmaz, resmî kaynaklardan (Winget, pip, GitHub) kurar.
+## Sorumluluk reddi
 
-## 📄 Lisans
+Listede siber güvenlik ve pentest araçları da bulunur. Bunları **yalnızca kendi sistemlerinde veya yazılı izin aldığın ortamlarda** kullan. Kurulan her programın lisansı kendi sahibine aittir. Atölye programların kendisini dağıtmaz, resmî kaynaklardan (Winget, pip, GitHub) kurar.
 
-MIT, bkz. [LICENSE](LICENSE).
+## Lisans
+
+MIT. Bkz. [LICENSE](LICENSE).

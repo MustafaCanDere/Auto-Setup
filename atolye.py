@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Mühendis Süper Kurulum Merkezi - Modern GUI & Kurulum Motoru
+Atölye - Mühendis Kurulum Merkezi (Modern GUI & Kurulum Motoru)
 Tamamen standart Python kütüphaneleri (tkinter, threading, subprocess, json) ile çalışır.
 Harici paket bağımlılığı gerektirmez, doğrudan çalışır.
 """
@@ -36,32 +36,34 @@ except ImportError:
 # Konfigürasyon dosya yolu
 CONFIG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "secilenler.json")
 
-# Renk Paleti (Modern Slate & Cyber Dark)
+# Renk Paleti (Apple tarzı açık tema)
 THEME = {
-    "bg_darkest": "#0b0d14",
-    "bg_main": "#10131e",
-    "bg_panel": "#161b2c",
-    "bg_card": "#1e243b",
-    "bg_card_hover": "#262d4a",
-    "bg_card_selected": "#212946",
-    "border": "#2c3454",
-    "border_light": "#3b4670",
-    "accent_blue": "#38bdf8",
-    "accent_purple": "#c084fc",
-    "accent_green": "#22c55e",
-    "accent_yellow": "#eab308",
-    "accent_red": "#ef4444",
-    "text_primary": "#f8fafc",
-    "text_secondary": "#94a3b8",
-    "text_muted": "#64748b",
-    "terminal_bg": "#090a0f",
-    "terminal_fg": "#4ade80",
+    "bg_darkest": "#ffffff",       # üst başlık
+    "bg_main": "#f5f5f7",          # ana zemin
+    "bg_panel": "#ececf1",         # kenar çubuğu ve alt panel
+    "bg_card": "#ffffff",
+    "bg_card_hover": "#f2f2f7",
+    "bg_card_selected": "#eaf3ff",
+    "border": "#e0e0e6",
+    "border_light": "#c7c7cc",
+    "accent_blue": "#0071e3",
+    "accent_blue_dark": "#0062c4",
+    "accent_purple": "#8944ab",
+    "accent_green": "#248a3d",
+    "accent_yellow": "#b25000",
+    "accent_red": "#d70015",
+    "text_primary": "#1d1d1f",
+    "text_secondary": "#6e6e73",
+    "text_muted": "#86868b",
+    "terminal_bg": "#1c1c1e",
+    "terminal_header": "#2c2c2e",
+    "terminal_fg": "#30d158",
 }
 
 class SuperInstallerApp:
     def __init__(self, root):
         self.root = root
-        self.root.title("⚡ Mühendis Süper Kurulum Merkezi v2.5")
+        self.root.title("Atölye - Mühendis Kurulum Merkezi")
         win_h = min(900, max(700, self.root.winfo_screenheight() - 90))
         self.root.geometry(f"1200x{win_h}")
         self.root.minsize(1050, 700)
@@ -145,9 +147,9 @@ class SuperInstallerApp:
         style.theme_use("clam")
         style.configure("Dark.Horizontal.TProgressbar",
                         troughcolor=THEME["bg_card"],
-                        background=THEME["accent_green"],
-                        darkcolor=THEME["accent_green"],
-                        lightcolor=THEME["accent_green"],
+                        background=THEME["accent_blue"],
+                        darkcolor=THEME["accent_blue"],
+                        lightcolor=THEME["accent_blue"],
                         bordercolor=THEME["border"],
                         thickness=14)
         # Koyu kaydırma çubuğu
@@ -181,10 +183,10 @@ class SuperInstallerApp:
 
     def build_ui(self):
         # 1. ÜST BAŞLIK (HEADER)
-        header_frame = tk.Frame(self.root, bg=THEME["bg_darkest"], padx=20, pady=14, relief="flat", highlightbackground=THEME["border"], highlightthickness=1)
+        header_frame = tk.Frame(self.root, bg=THEME["bg_darkest"], padx=24, pady=16, relief="flat")
         header_frame.pack(side="top", fill="x")
-        # Başlığın altında ince vurgu çizgisi
-        tk.Frame(self.root, height=2, bg=THEME["accent_blue"]).pack(side="top", fill="x")
+        # Başlığın altında ince ayırıcı çizgi
+        tk.Frame(self.root, height=1, bg=THEME["border"]).pack(side="top", fill="x")
 
         # Sol Başlık
         title_box = tk.Frame(header_frame, bg=THEME["bg_darkest"])
@@ -192,8 +194,8 @@ class SuperInstallerApp:
 
         title_lbl = tk.Label(
             title_box,
-            text="⚡ MÜHENDİS SÜPER KURULUM MERKEZİ",
-            font=("Segoe UI", 16, "bold"),
+            text="Atölye",
+            font=("Segoe UI Semibold", 22),
             fg=THEME["text_primary"],
             bg=THEME["bg_darkest"]
         )
@@ -201,9 +203,9 @@ class SuperInstallerApp:
 
         sub_lbl = tk.Label(
             title_box,
-            text="AI & LLM • Yazılım • Donanım & Gömülü • DevOps • Verimlilik • Python Pip Kütüphaneleri",
-            font=("Segoe UI", 9),
-            fg=THEME["accent_blue"],
+            text=f"Mühendis Kurulum Merkezi  ·  {len(PROGRAMS)} araç, tek tıkla kurulum",
+            font=("Segoe UI", 10),
+            fg=THEME["text_secondary"],
             bg=THEME["bg_darkest"]
         )
         sub_lbl.pack(anchor="w")
@@ -213,22 +215,38 @@ class SuperInstallerApp:
         top_right.pack(side="right", fill="y")
 
         # Arama Çubuğu
-        search_frame = tk.Frame(top_right, bg=THEME["bg_card"], highlightbackground=THEME["border_light"], highlightthickness=1, padx=8, pady=4)
-        search_frame.pack(side="right", padx=(15, 0))
+        search_bg = "#e8e8ed"
+        search_frame = tk.Frame(top_right, bg=search_bg, padx=12, pady=7)
+        search_frame.pack(side="right", padx=(15, 0), pady=4)
 
-        search_icon = tk.Label(search_frame, text="🔍", font=("Segoe UI", 10), fg=THEME["text_muted"], bg=THEME["bg_card"])
+        search_icon = tk.Label(search_frame, text="🔍", font=("Segoe UI", 10), fg=THEME["text_muted"], bg=search_bg)
         search_icon.pack(side="left")
 
+        self.search_placeholder = "Program ara (docker, kicad, ai...)"
         self.search_entry = tk.Entry(
             search_frame,
             font=("Segoe UI", 10),
-            bg=THEME["bg_card"],
-            fg=THEME["text_primary"],
+            bg=search_bg,
+            fg=THEME["text_muted"],
             insertbackground=THEME["text_primary"],
             relief="flat",
-            width=28
+            width=32
         )
-        self.search_entry.pack(side="left", padx=4)
+        self.search_entry.insert(0, self.search_placeholder)
+        self.search_entry.pack(side="left", padx=6)
+
+        def _focus_in(_e):
+            if self.search_entry.get() == self.search_placeholder:
+                self.search_entry.delete(0, "end")
+                self.search_entry.configure(fg=THEME["text_primary"])
+
+        def _focus_out(_e):
+            if not self.search_entry.get():
+                self.search_entry.insert(0, self.search_placeholder)
+                self.search_entry.configure(fg=THEME["text_muted"])
+
+        self.search_entry.bind("<FocusIn>", _focus_in)
+        self.search_entry.bind("<FocusOut>", _focus_out)
         self.search_entry.bind("<KeyRelease>", self.on_search)
 
         # 2. ANA GÖVDE (SPLIT: SOL KENAR ÇUBUĞU + SAĞ İÇERİK)
@@ -236,7 +254,7 @@ class SuperInstallerApp:
         main_body.pack(side="top", fill="both", expand=True)
 
         # 2.A SOL KENAR ÇUBUĞU (KATEGORİLER & HAZIR PROFİLLER)
-        sidebar = tk.Frame(main_body, bg=THEME["bg_panel"], width=280, padx=12, pady=12, highlightbackground=THEME["border"], highlightthickness=1)
+        sidebar = tk.Frame(main_body, bg=THEME["bg_panel"], width=290, padx=14, pady=14)
         sidebar.pack(side="left", fill="y")
         sidebar.pack_propagate(False)
 
@@ -334,7 +352,7 @@ class SuperInstallerApp:
             stat_box,
             text="Seçilen: 0 / 0",
             font=("Segoe UI", 9, "bold"),
-            fg=THEME["accent_green"],
+            fg=THEME["accent_blue"],
             bg=THEME["bg_card"],
             justify="left"
         )
@@ -497,12 +515,13 @@ class SuperInstallerApp:
 
         self.install_btn = tk.Button(
             btn_action_box,
-            text="🚀 SEÇİLENLERİ KUR (0)",
+            text="SEÇİLENLERİ KUR (0)",
             font=("Segoe UI", 10, "bold"),
             fg="#ffffff",
-            bg=THEME["accent_green"],
-            activebackground="#15803d",
+            bg=THEME["accent_blue"],
+            activebackground=THEME["accent_blue_dark"],
             activeforeground="#ffffff",
+            disabledforeground=THEME["text_muted"],
             relief="flat",
             padx=20,
             pady=6,
@@ -510,24 +529,24 @@ class SuperInstallerApp:
             command=self.start_installation
         )
         self.install_btn.pack(side="left", padx=6)
-        self.add_hover(self.install_btn, THEME["accent_green"], "#16a34a")
+        self.add_hover(self.install_btn, THEME["accent_blue"], THEME["accent_blue_dark"])
 
         # 4. CANLI TERMİNAL ÇIKTI KUTUSU (DRAWER)
         self.terminal_frame = tk.Frame(footer_frame, bg=THEME["terminal_bg"], highlightbackground=THEME["border"], highlightthickness=1)
         self.terminal_frame.pack(fill="x", pady=(6, 0))
 
-        terminal_header = tk.Frame(self.terminal_frame, bg="#0d0e15", padx=8, pady=3)
+        terminal_header = tk.Frame(self.terminal_frame, bg=THEME["terminal_header"], padx=8, pady=3)
         terminal_header.pack(fill="x")
 
-        term_title = tk.Label(terminal_header, text="CANLI KURULUM KONSOLU (Winget & Pip Stream)", font=("Consolas", 8, "bold"), fg=THEME["text_muted"], bg="#0d0e15")
+        term_title = tk.Label(terminal_header, text="CANLI KURULUM KONSOLU (Winget & Pip Stream)", font=("Consolas", 8, "bold"), fg="#aeaeb2", bg=THEME["terminal_header"])
         term_title.pack(side="left")
 
         term_clear_btn = tk.Button(
             terminal_header,
             text="Temizle",
             font=("Segoe UI", 7),
-            fg=THEME["text_muted"],
-            bg="#0d0e15",
+            fg="#aeaeb2",
+            bg=THEME["terminal_header"],
             relief="flat",
             cursor="hand2",
             command=self.clear_terminal
@@ -597,7 +616,10 @@ class SuperInstallerApp:
         self.refresh_program_list()
 
     def on_search(self, event=None):
-        self.search_query = self.search_entry.get().strip().lower()
+        text = self.search_entry.get().strip()
+        if text == self.search_placeholder:
+            text = ""
+        self.search_query = text.lower()
         self.refresh_program_list()
 
     def apply_preset(self, preset_key):
@@ -694,8 +716,8 @@ class SuperInstallerApp:
             bg=THEME["bg_card_selected"] if var.get() else THEME["bg_card"],
             highlightbackground=THEME["accent_blue"] if var.get() else THEME["border"],
             highlightthickness=1,
-            padx=14,
-            pady=10
+            padx=16,
+            pady=12
         )
         self.card_frames[pid] = card
 
@@ -713,10 +735,10 @@ class SuperInstallerApp:
             variable=var,
             text="",
             bg=card.cget("bg"),
-            fg=THEME["accent_green"],
+            fg=THEME["accent_blue"],
             activebackground=card.cget("bg"),
-            activeforeground=THEME["accent_green"],
-            selectcolor=THEME["bg_darkest"],
+            activeforeground=THEME["accent_blue"],
+            selectcolor="#ffffff",
             relief="flat",
             cursor="hand2"
         )
@@ -745,13 +767,13 @@ class SuperInstallerApp:
             badge_color = THEME["accent_purple"]
         elif ptype == "git_repo":
             badge_text = "GITHUB REPO"
-            badge_color = "#f59e0b"
+            badge_color = THEME["accent_yellow"]
         elif ptype == "direct_zip":
             badge_text = "PORTATİF ZIP"
-            badge_color = "#06b6d4"
+            badge_color = "#007aa3"
         elif ptype == "direct_exe":
             badge_text = "DOĞRUDAN İNDİR"
-            badge_color = "#10b981"
+            badge_color = THEME["accent_green"]
         else:
             badge_text = "WINGET SİSTEM"
             badge_color = THEME["accent_blue"]
@@ -839,7 +861,7 @@ class SuperInstallerApp:
             self.stat_sub.configure(text=f"Winget: {winget_count} | Pip: {pip_count} | Git/Zip: {other_count}")
         else:
             self.stat_sub.configure(text=f"Winget: {winget_count} | Pip: {pip_count}")
-        self.install_btn.configure(text=f"🚀 SEÇİLENLERİ KUR ({selected_count})")
+        self.install_btn.configure(text=f"SEÇİLENLERİ KUR ({selected_count})")
 
     def update_category_badges(self):
         for cat in CATEGORIES:
@@ -878,7 +900,7 @@ class SuperInstallerApp:
 
         self.is_installing = True
         self.cancel_requested = False
-        self.install_btn.configure(state="disabled", bg=THEME["bg_card"], text="⏳ Kuruluyor...")
+        self.install_btn.configure(state="disabled", bg=THEME["border"], text="Kuruluyor...")
         self.cancel_btn.configure(state="normal")
         self.progress_bar.configure(maximum=len(selected_programs), value=0)
 
@@ -911,7 +933,7 @@ class SuperInstallerApp:
         skipped_count = 0
 
         self.log_to_terminal("=" * 60)
-        self.log_to_terminal(f"🚀 MÜHENDİS SÜPER KURULUM BAŞLADI: Toplam {total} Öğe")
+        self.log_to_terminal(f"ATÖLYE KURULUMU BAŞLADI: Toplam {total} öğe")
         self.log_to_terminal("=" * 60)
 
         # 32-bit Python'da PyTorch, OpenCV, scikit-image gibi paketler hazır gelmez
@@ -1142,7 +1164,7 @@ class SuperInstallerApp:
         def _finish():
             self.current_process = None
             selected_count = sum(1 for v in self.selected_vars.values() if v.get())
-            self.install_btn.configure(state="normal", bg=THEME["accent_green"], text=f"🚀 SEÇİLENLERİ KUR ({selected_count})")
+            self.install_btn.configure(state="normal", bg=THEME["accent_blue"], text=f"SEÇİLENLERİ KUR ({selected_count})")
             self.cancel_btn.configure(state="disabled")
 
             if self.cancel_requested:

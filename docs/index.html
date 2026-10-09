@@ -3,39 +3,28 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Mühendis Süper Kurulum Merkezi</title>
-<meta name="description" content="Windows için tik tik seçmeli mühendis kurulum paketi: 222+ araç, hazır profiller, tek tıkla kurulum.">
+<title>Atölye</title>
+<meta name="description" content="Atölye: Windows için mühendis kurulum merkezi. 222 araç, hazır profiller, tek tıkla kurulum.">
 <style>
 :root {
-  --bg: #0b0d14;
-  --bg-2: #10131e;
-  --panel: #161b2c;
-  --card: #1e243b;
-  --border: #2c3454;
-  --text: #f8fafc;
-  --muted: #94a3b8;
-  --blue: #38bdf8;
-  --purple: #c084fc;
-  --green: #22c55e;
-  --amber: #f59e0b;
-}
-:root[data-theme="light"] {
-  --bg: #f6f8fc;
-  --bg-2: #edf1f9;
+  --bg: #fbfbfd;
+  --bg-2: #f5f5f7;
   --panel: #ffffff;
   --card: #ffffff;
-  --border: #d5dcec;
-  --text: #0f172a;
-  --muted: #55627a;
-  --blue: #0369a1;
-  --purple: #7e22ce;
-  --green: #15803d;
-  --amber: #b45309;
+  --border: #e0e0e6;
+  --text: #1d1d1f;
+  --muted: #6e6e73;
+  --blue: #0071e3;
+  --on-blue: #ffffff;
+  --amber: #b25000;
+  --glow: rgba(0,113,227,.10);
+  --shadow: 0 30px 80px -30px rgba(0,0,0,.25);
 }
-@media (prefers-color-scheme: light) {
-  :root:not([data-theme="dark"]) {
-    --bg: #f6f8fc; --bg-2: #edf1f9; --panel: #ffffff; --card: #ffffff; --border: #d5dcec;
-    --text: #0f172a; --muted: #55627a; --blue: #0369a1; --purple: #7e22ce; --green: #15803d; --amber: #b45309;
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #000000; --bg-2: #0b0b0d; --panel: #1c1c1e; --card: #1c1c1e; --border: #2c2c2e;
+    --text: #f5f5f7; --muted: #a1a1a6; --blue: #2997ff; --on-blue: #04121c; --amber: #ff9f0a;
+    --glow: rgba(41,151,255,.16); --shadow: 0 30px 80px -30px rgba(0,0,0,.8);
   }
 }
 * { box-sizing: border-box; }
@@ -54,14 +43,15 @@ a { color: inherit; }
 nav { border-bottom: 1px solid var(--border); background: var(--bg); position: sticky; top: 0; z-index: 5; }
 nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 56px; }
 .brand { font-weight: 700; text-decoration: none; display: flex; align-items: center; gap: 8px; }
-.brand span { color: var(--blue); }
+.brand span { color: var(--muted); font-weight: 400; font-size: 14px; }
+@media (max-width: 480px) { .brand span { display: none; } }
 nav .links { display: flex; gap: 18px; font-size: 14px; color: var(--muted); }
 nav .links a { text-decoration: none; }
 nav .links a:hover { color: var(--text); }
 @media (max-width: 640px) { nav .links { display: none; } }
 
 /* Hero */
-.hero { padding: 72px 0 40px; text-align: center; background: radial-gradient(900px 300px at 50% -50px, rgba(56,189,248,.18), transparent); }
+.hero { padding: 72px 0 40px; text-align: center; background: radial-gradient(900px 300px at 50% -50px, var(--glow), transparent); }
 .eyebrow { display: inline-block; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--blue); border: 1px solid var(--border); border-radius: 999px; padding: 4px 12px; background: var(--panel); }
 h1 { font-size: clamp(32px, 6vw, 54px); line-height: 1.1; margin: 18px 0 14px; letter-spacing: -.02em; }
 h1 em { font-style: normal; color: var(--blue); }
@@ -69,8 +59,8 @@ h1 em { font-style: normal; color: var(--blue); }
 .cta { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
 .btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 22px; border-radius: 10px; font-weight: 600; text-decoration: none; border: 1px solid var(--border); background: var(--panel); transition: transform .15s, border-color .15s; }
 .btn:hover { transform: translateY(-1px); border-color: var(--blue); }
-.btn.primary { background: var(--green); border-color: var(--green); color: #fff; }
-.shot { margin: 44px auto 0; max-width: 940px; border: 1px solid var(--border); border-radius: 14px; overflow: hidden; background: var(--panel); box-shadow: 0 30px 80px -30px rgba(0,0,0,.6); }
+.btn.primary { background: var(--blue); border-color: var(--blue); color: var(--on-blue); }
+.shot { margin: 44px auto 0; max-width: 940px; border: 1px solid var(--border); border-radius: 14px; overflow: hidden; background: var(--panel); box-shadow: var(--shadow); }
 .shot img { display: block; width: 100%; height: auto; }
 
 /* İstatistikler */
@@ -101,7 +91,7 @@ h2 { font-size: 28px; margin: 0 0 6px; letter-spacing: -.01em; }
 .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; counter-reset: s; }
 @media (max-width: 760px) { .steps { grid-template-columns: 1fr; } }
 .step { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
-.step::before { counter-increment: s; content: counter(s); display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--blue); color: #04121c; font-weight: 700; margin-bottom: 10px; }
+.step::before { counter-increment: s; content: counter(s); display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--blue); color: var(--on-blue); font-weight: 700; margin-bottom: 10px; }
 .step h3 { margin: 0 0 4px; font-size: 16px; }
 .step p { margin: 0; color: var(--muted); font-size: 14px; }
 code { background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 1px 6px; font-size: 13px; }
@@ -117,7 +107,7 @@ a:focus-visible, .btn:focus-visible { outline: 2px solid var(--blue); outline-of
 
 <nav>
   <div class="wrap">
-    <a class="brand" href="#top">⚡ Mühendis <span>Kurulum</span></a>
+    <a class="brand" href="#top">Atölye <span>Mühendis Kurulum Merkezi</span></a>
     <div class="links">
       <a href="#kategoriler">Kategoriler</a>
       <a href="#profiller">Profiller</a>
@@ -130,14 +120,14 @@ a:focus-visible, .btn:focus-visible { outline: 2px solid var(--blue); outline-of
 <header class="hero" id="top">
   <div class="wrap">
     <span class="eyebrow">Windows • Python • Ücretsiz • MIT</span>
-    <h1>Tik tik seç, <em>tek tıkla kur.</em></h1>
+    <h1>Atölye. <em>Seç, kur, çalış.</em></h1>
     <p class="lead">Yapay zekadan donanıma, DevOps'tan tasarıma kadar 222+ mühendislik aracını tek pencereden seç ve otomatik kur.</p>
     <div class="cta">
       <a class="btn primary" href="#" id="dl">⬇ ZIP olarak indir</a>
       <a class="btn repo-link" href="#">★ GitHub'da gör</a>
     </div>
     <div class="shot">
-      <img src="screenshot.png" alt="Mühendis Süper Kurulum Merkezi arayüzü: sol tarafta kategoriler ve hazır profiller, sağda seçilebilir program kartları">
+      <img src="screenshot.png" alt="Atölye arayüzü: sol tarafta kategoriler ve hazır profiller, sağda seçilebilir program kartları">
     </div>
   </div>
 </header>
@@ -187,7 +177,7 @@ a:focus-visible, .btn:focus-visible { outline: 2px solid var(--blue); outline-of
     <p class="sub">Kurulum yok, sadece bir <code>.bat</code> dosyası.</p>
     <div class="steps">
       <div class="step"><h3>İndir</h3><p>Repoyu ZIP olarak indir ve klasöre çıkar.</p></div>
-      <div class="step"><h3>Başlat</h3><p><code>KURULUM_BASLAT.bat</code> dosyasına çift tıkla. Python yoksa Winget ile kurmayı önerir.</p></div>
+      <div class="step"><h3>Başlat</h3><p><code>ATOLYE_BASLAT.bat</code> dosyasına çift tıkla. Python yoksa Winget ile kurmayı önerir.</p></div>
       <div class="step"><h3>Seç ve kur</h3><p>Programları işaretle, <b>Seçilenleri Kur</b> butonuna bas. Canlı konsoldan izle.</p></div>
     </div>
   </section>
@@ -211,7 +201,7 @@ a:focus-visible, .btn:focus-visible { outline: 2px solid var(--blue); outline-of
     var host = location.hostname;
     if (host.endsWith(".github.io")) {
       var user = host.split(".")[0];
-      var repo = location.pathname.split("/").filter(Boolean)[0] || "muhendis-kurulum";
+      var repo = location.pathname.split("/").filter(Boolean)[0] || "atolye";
       var url = "https://github.com/" + user + "/" + repo;
       document.querySelectorAll(".repo-link").forEach(function (a) { a.href = url; });
       document.getElementById("dl").href = url + "/archive/refs/heads/main.zip";

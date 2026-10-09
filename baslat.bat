@@ -1,10 +1,10 @@
 @echo off
 chcp 65001 >nul 2>&1
-title Muhendis Super Kurulum Merkezi v2.5
+title Atolye - Muhendis Kurulum Merkezi
 cd /d "%~dp0"
 
 echo ============================================================================
-echo   MUHENDIS SUPER KURULUM MERKEZI BASLATILIYOR...
+echo   ATOLYE BASLATILIYOR...
 echo   AI - Yazilim - Donanim ve Gomulu - DevOps - Verimlilik
 echo ============================================================================
 echo.
@@ -114,11 +114,11 @@ exit /b 1
 
 :PYTHON_OK
 echo [OK] Python motoru aktif: %PYTHON_RUNNER%
-echo [*] Muhendis Kurulum Arayuzu aciliyor...
+echo [*] Atolye arayuzu aciliyor...
 echo.
 
 REM 3. PYTHON GUI ARAYUZUNU BASLAT
-%PYTHON_RUNNER% "%~dp0muhendis_kurulum.py"
+%PYTHON_RUNNER% "%~dp0atolye.py"
 
 if %errorlevel% neq 0 (
     echo.
