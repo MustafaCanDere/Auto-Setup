@@ -10,6 +10,7 @@ import os
 import json
 import time
 import shutil
+import struct
 import threading
 import subprocess
 import urllib.request
@@ -852,6 +853,11 @@ class SuperInstallerApp:
         self.log_to_terminal(f"🚀 MÜHENDİS SÜPER KURULUM BAŞLADI: Toplam {total} Öğe")
         self.log_to_terminal("=" * 60)
 
+        # 32-bit Python'da PyTorch, OpenCV, scikit-image gibi paketler hazır gelmez
+        if struct.calcsize("P") * 8 == 32 and any(p.get("type") == "pip" for p in target_programs):
+            self.log_to_terminal("⚠ UYARI: 32-bit Python kullanılıyor. Büyük pip paketleri (torch, opencv vb.) "
+                                 "kurulamayabilir. 64-bit Python 3.12 önerilir.")
+
         for idx, p in enumerate(target_programs, start=1):
             if self.cancel_requested:
                 self.log_to_terminal("\n[İPTAL EDİLDİ] Kurulum işlemi kullanıcı tarafından durduruldu.")
@@ -896,10 +902,11 @@ class SuperInstallerApp:
                     target_dir = os.path.join(tools_dir, pid)
                     if os.path.exists(target_dir) and os.path.isdir(os.path.join(target_dir, ".git")):
                         self.log_to_terminal(f"   [GÜNCELLEME] Mevcut repo güncelleniyor: {target_dir}")
-                        cmd = ["git", "-C", target_dir, "pull"]
+                        cmd = ["git", "-c", "core.longpaths=true", "-C", target_dir, "pull"]
                     else:
                         self.log_to_terminal(f"   [GİT KLONLA] {pkg_id} indiriliyor -> {target_dir}")
-                        cmd = ["git", "clone", "--depth", "1", pkg_id, target_dir]
+                        # core.longpaths: Windows'ta 260 karakter yol sınırı hatasını önler
+                        cmd = ["git", "-c", "core.longpaths=true", "clone", "--depth", "1", pkg_id, target_dir]
 
                     self.current_process = subprocess.Popen(
                         cmd,
@@ -978,6 +985,12 @@ class SuperInstallerApp:
                     if not self.cancel_requested:
                         self.log_to_terminal(f"   [ZIP AÇILIYOR] {target_dir} dizinine çıkartılıyor...")
                         with zipfile.ZipFile(temp_zip, "r") as z:
+                            # Zip-slip koruması: hedef klasör dışına yazılmasını engelle
+                            base = os.path.realpath(target_dir)
+                            for member in z.namelist():
+                                dest = os.path.realpath(os.path.join(target_dir, member))
+                                if dest != base and not dest.startswith(base + os.sep):
+                                    raise ValueError(f"Güvensiz zip girdisi: {member}")
                             z.extractall(target_dir)
                         try:
                             os.remove(temp_zip)
