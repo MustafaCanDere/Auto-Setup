@@ -15,6 +15,7 @@ import threading
 import subprocess
 import urllib.request
 import zipfile
+import webbrowser
 import tkinter as tk
 import tkinter.font as tkfont
 from tkinter import ttk, messagebox
@@ -54,6 +55,7 @@ THEME = {
     "accent_green": "#248a3d",
     "accent_yellow": "#b25000",
     "accent_red": "#d70015",
+    "accent_indigo": "#5856d6",
     "text_primary": "#1d1d1f",
     "text_secondary": "#6e6e73",
     "text_muted": "#86868b",
@@ -386,6 +388,133 @@ class InstallOverlay(tk.Frame):
             _round_rect(c, 0, 0, w, 12, 6, fill=THEME["accent_blue"], outline=THEME["accent_blue"])
 
 
+class ProgramCard(tk.Canvas):
+    """Tek Canvas üzerine çizilen hızlı program kartı: onay kutusu, ad, tür rozeti, açıklama, durum."""
+
+    HEIGHT = 78
+    _fonts = {}
+    _BADGES = {
+        "pip": ("PIP PAKETİ", "accent_purple"),
+        "git_repo": ("GITHUB REPO", "accent_yellow"),
+        "direct_zip": ("PORTATİF ZIP", None),
+        "direct_exe": ("DOĞRUDAN İNDİR", "accent_green"),
+        "winget": ("WINGET SİSTEM", "accent_blue"),
+        "web": ("RESMÎ SİTE", "accent_indigo"),
+    }
+
+    def __init__(self, parent, program, variable, status):
+        super().__init__(parent, height=self.HEIGHT, bg=parent.cget("bg"),
+                         highlightthickness=0, bd=0, cursor="hand2")
+        if not ProgramCard._fonts:
+            ProgramCard._fonts = {
+                "name": tkfont.Font(font=("Segoe UI", 10, "bold")),
+                "badge": tkfont.Font(font=("Segoe UI", 7, "bold")),
+                "desc": tkfont.Font(font=("Segoe UI", 8)),
+                "status": tkfont.Font(font=("Segoe UI", 9, "bold")),
+            }
+        self.program = program
+        self.var = variable
+        self._is_web = program.get("type") == "web"
+        if self._is_web:
+            # Ticari yazılım: kurulum yok, karta tıklayınca resmî sayfa açılır
+            status = ("Resmî sayfa ↗", THEME["accent_indigo"])
+        self.status_text, self.status_color = status
+        self._hover = False
+        self._last_w = 0
+        self.bind("<Configure>", self._on_configure)
+        self.bind("<Button-1>", self._on_click)
+        self.bind("<Enter>", lambda _e: self._set_hover(True))
+        self.bind("<Leave>", lambda _e: self._set_hover(False))
+        self.var.trace_add("write", lambda *_a: self._draw())
+
+    def _on_click(self, _e):
+        if self._is_web:
+            webbrowser.open(self.program["package_id"])
+        else:
+            self.var.set(not self.var.get())
+
+    def set_status(self, text, color):
+        if self._is_web:
+            return
+        self.status_text, self.status_color = text, color
+        self._draw()
+
+    def _set_hover(self, value):
+        if self._hover != value:
+            self._hover = value
+            self._draw()
+
+    def _on_configure(self, e):
+        if e.width != self._last_w:
+            self._last_w = e.width
+            self._draw()
+
+    @staticmethod
+    def _fit(text, font, avail):
+        if font.measure(text) <= avail:
+            return text
+        lo, hi = 0, len(text)
+        while lo < hi:
+            mid = (lo + hi + 1) // 2
+            if font.measure(text[:mid] + "…") <= avail:
+                lo = mid
+            else:
+                hi = mid - 1
+        return text[:lo].rstrip() + "…"
+
+    def _draw(self):
+        if not self.winfo_exists():
+            return
+        w, h = self.winfo_width(), self.HEIGHT
+        if w < 60:
+            return
+        f = self._fonts
+        p = self.program
+        selected = self.var.get()
+        self.delete("all")
+
+        fill = THEME["bg_card_selected"] if selected else THEME["bg_card"]
+        outline = THEME["border_selected"] if selected else (
+            THEME["border_light"] if self._hover else THEME["border"])
+        _round_rect(self, 0, 0, w - 1, h - 1, 16, fill=fill, outline=outline, width=1)
+
+        # Onay kutusu (web türünde bunun yerine bağlantı simgesi)
+        cx, cy, s = 18, (h - 22) // 2, 22
+        if self._is_web:
+            link_color = THEME["accent_indigo"]
+            _round_rect(self, cx, cy, cx + s, cy + s, 7, fill="#ffffff", outline=link_color, width=1, tag="cb")
+            self.create_text(cx + s / 2, cy + s / 2 - 1, text="↗", font=f["status"], fill=link_color)
+        elif selected:
+            _round_rect(self, cx, cy, cx + s, cy + s, 7, fill=THEME["accent_blue"], outline=THEME["accent_blue"], tag="cb")
+            self.create_line(cx + s * 0.28, cy + s * 0.53, cx + s * 0.44, cy + s * 0.69, cx + s * 0.75, cy + s * 0.33,
+                             fill="#ffffff", width=2.5, capstyle="round", joinstyle="round")
+        else:
+            box_outline = THEME["accent_blue"] if self._hover else "#b4b4bc"
+            _round_rect(self, cx, cy, cx + s, cy + s, 7, fill="#ffffff", outline=box_outline, width=1, tag="cb")
+
+        # Ad ve tür rozeti
+        tx = 54
+        self.create_text(tx, 28, text=p["name"], anchor="w", font=f["name"], fill=THEME["text_primary"])
+        name_w = f["name"].measure(p["name"])
+        label, color_key = self._BADGES.get(p.get("type", "winget"), self._BADGES["winget"])
+        badge_color = THEME[color_key] if color_key else "#007aa3"
+        bw = f["badge"].measure(label) + 14
+        bx = tx + name_w + 12
+        if bx + bw < w - 120:
+            _round_rect(self, bx, 19, bx + bw, 37, 9, fill=THEME["bg_panel"], outline=THEME["bg_panel"], tag="bd")
+            self.create_text(bx + bw / 2, 28, text=label, font=f["badge"], fill=badge_color)
+
+        # Durum (sağda)
+        status_w = f["status"].measure(self.status_text)
+        self.create_text(w - 20, h / 2, text=self.status_text, anchor="e", font=f["status"], fill=self.status_color)
+
+        # Açıklama (sığmazsa "…" ile kısalt)
+        avail = w - tx - status_w - 44
+        desc = f"{p['desc']}  •  [ {p['package_id']} ]"
+        self.create_text(tx, 54, text=self._fit(desc, f["desc"], avail), anchor="w",
+                         font=f["desc"], fill=THEME["text_secondary"])
+
+
 class SuperInstallerApp:
     def __init__(self, root):
         self.root = root
@@ -397,8 +526,8 @@ class SuperInstallerApp:
 
         # Durum Değişkenleri
         self.selected_vars = {}  # prog_id -> tk.BooleanVar
-        self.status_labels = {}  # prog_id -> tk.Label
-        self.card_frames = {}    # prog_id -> tk.Frame
+        self.card_frames = {}    # prog_id -> ProgramCard
+        self._packed_ids = []    # ekranda şu an gösterilen kartların sırası
         self.program_statuses = {}  # prog_id -> (text, color)
         self.current_process = None
         self.empty_lbl = None
@@ -464,6 +593,8 @@ class SuperInstallerApp:
             pass
 
     def on_selection_change(self):
+        if getattr(self, "_bulk", False):
+            return
         self.save_selections()
         self.update_stats()
         self.update_category_badges()
@@ -529,7 +660,8 @@ class SuperInstallerApp:
 
         sub_lbl = tk.Label(
             title_box,
-            text=f"Mühendis Kurulum Merkezi  ·  {len(PROGRAMS)} araç, tek tıkla kurulum",
+            text=(f"Mühendis Kurulum Merkezi  ·  {sum(1 for p in PROGRAMS if p['type'] != 'web')} araç, tek tıkla kurulum"
+                  f"  ·  {sum(1 for p in PROGRAMS if p['type'] == 'web')} ticari yazılım için resmî sayfa"),
             font=("Segoe UI", 10),
             fg=THEME["text_secondary"],
             bg=THEME["bg_darkest"]
@@ -649,6 +781,7 @@ class SuperInstallerApp:
         presets_list = [
             ("all", "🌟 Tümünü Seç"),
             ("none", "🧹 Temizle"),
+            ("workplace", "🏢 İş Yeri"),
             ("ai_engineer", "🤖 Yapay Zeka"),
             ("cyber_security", "🛡️ Siber Güvenlik"),
             ("design_media", "🎨 Tasarım & 3D"),
@@ -908,7 +1041,9 @@ class SuperInstallerApp:
         if event.widget == self.terminal_text:
             return
         # İşaretçi sol paneldeyse onu, değilse program listesini kaydır
-        in_sidebar = str(event.widget).startswith(str(self.sidebar_outer))
+        outer = str(self.sidebar_outer)
+        path = str(event.widget)
+        in_sidebar = path == outer or path.startswith(outer + ".")
         target = self.sidebar_canvas if in_sidebar else self.canvas
         if target.yview() == (0.0, 1.0):
             return
@@ -970,24 +1105,38 @@ class SuperInstallerApp:
         preset = PRESETS[preset_key]
         target_ids = set(preset["ids"])
 
-        for pid, var in self.selected_vars.items():
-            var.set(pid in target_ids)
-
+        self._bulk = True
+        try:
+            for pid, var in self.selected_vars.items():
+                var.set(pid in target_ids)
+        finally:
+            self._bulk = False
+        self.save_selections()
         self.update_stats()
         self.update_category_badges()
         self.log_to_terminal(f"[ŞABLON SEÇİLDİ] {preset['name']} uygulandı ({len(target_ids)} program).")
 
     def select_current_category(self):
-        items = self.get_visible_programs()
-        for p in items:
-            self.selected_vars[p["id"]].set(True)
+        items = [p for p in self.get_visible_programs() if p.get("type") != "web"]
+        self._bulk = True
+        try:
+            for p in items:
+                self.selected_vars[p["id"]].set(True)
+        finally:
+            self._bulk = False
+        self.save_selections()
         self.update_stats()
         self.update_category_badges()
 
     def deselect_current_category(self):
         items = self.get_visible_programs()
-        for p in items:
-            self.selected_vars[p["id"]].set(False)
+        self._bulk = True
+        try:
+            for p in items:
+                self.selected_vars[p["id"]].set(False)
+        finally:
+            self._bulk = False
+        self.save_selections()
         self.update_stats()
         self.update_category_badges()
 
@@ -1011,7 +1160,6 @@ class SuperInstallerApp:
 
     def create_all_cards(self):
         self.card_frames.clear()
-        self.status_labels.clear()
 
         self.empty_lbl = tk.Label(
             self.scrollable_frame,
@@ -1027,169 +1175,32 @@ class SuperInstallerApp:
 
     def refresh_program_list(self):
         visible_programs = self.get_visible_programs()
-        visible_ids = {p["id"] for p in visible_programs}
+        visible_ids = [p["id"] for p in visible_programs]
 
-        if not visible_programs:
-            for pid, card in self.card_frames.items():
-                card.pack_forget()
-            if self.empty_lbl:
-                self.empty_lbl.pack(fill="x")
-        else:
+        if visible_ids != self._packed_ids:
+            for pid in self._packed_ids:
+                self.card_frames[pid].pack_forget()
             if self.empty_lbl:
                 self.empty_lbl.pack_forget()
-            for p in PROGRAMS:
-                pid = p["id"]
-                if pid in self.card_frames:
-                    card = self.card_frames[pid]
-                    if pid in visible_ids:
-                        card.pack(fill="x", pady=4, padx=2)
-                    else:
-                        card.pack_forget()
+            if not visible_ids:
+                if self.empty_lbl:
+                    self.empty_lbl.pack(fill="x")
+            else:
+                for pid in visible_ids:
+                    self.card_frames[pid].pack(fill="x", pady=4, padx=2)
+            self._packed_ids = visible_ids
+            self.canvas.yview_moveto(0)
 
         self.update_category_badges()
 
     def create_program_card(self, p):
         pid = p["id"]
-        var = self.selected_vars[pid]
-
-        # Kart Çerçevesi
-        rcard = RoundedFrame(
-            self.scrollable_frame,
-            fill=THEME["bg_card_selected"] if var.get() else THEME["bg_card"],
-            outline=THEME["border_selected"] if var.get() else THEME["border"],
-            radius=16,
-            pad=(18, 13)
-        )
-        self.card_frames[pid] = rcard
-        card = rcard.body
-
-        # Sol: Checkbox ve Bilgiler
-        left_box = tk.Frame(card, bg=card.cget("bg"))
-        left_box.pack(side="left", fill="both", expand=True)
-
-        # Üst Satır: Checkbox + İsim + Tip Rozeti
-        top_line = tk.Frame(left_box, bg=card.cget("bg"))
-        top_line.pack(fill="x", anchor="w")
-
-        # Özel Checkbutton
-        cb = RoundCheck(top_line, variable=var, bg=card.cget("bg"))
-        cb.pack(side="left", padx=(0, 10))
-
-        # Başlık Etiketi
-        title_lbl = tk.Label(
-            top_line,
-            text=p["name"],
-            font=("Segoe UI", 10, "bold"),
-            fg=THEME["text_primary"],
-            bg=card.cget("bg"),
-            cursor="hand2"
-        )
-        title_lbl.pack(side="left")
-
-        # Tıklanabilir Yapma
-        def _toggle(event=None):
-            var.set(not var.get())
-        title_lbl.bind("<Button-1>", _toggle)
-
-        # Tip Rozeti
-        ptype = p.get("type", "winget")
-        if ptype == "pip":
-            badge_text = "PIP PAKETİ"
-            badge_color = THEME["accent_purple"]
-        elif ptype == "git_repo":
-            badge_text = "GITHUB REPO"
-            badge_color = THEME["accent_yellow"]
-        elif ptype == "direct_zip":
-            badge_text = "PORTATİF ZIP"
-            badge_color = "#007aa3"
-        elif ptype == "direct_exe":
-            badge_text = "DOĞRUDAN İNDİR"
-            badge_color = THEME["accent_green"]
-        else:
-            badge_text = "WINGET SİSTEM"
-            badge_color = THEME["accent_blue"]
-
-        type_badge = tk.Label(
-            top_line,
-            text=badge_text,
-            font=("Segoe UI", 7, "bold"),
-            fg=badge_color,
-            bg=THEME["bg_panel"],
-            padx=6,
-            pady=2
-        )
-        type_badge.pack(side="left", padx=(10, 0))
-
-        # Alt Satır: Açıklama ve Paket Kimliği
-        desc_lbl = tk.Label(
-            left_box,
-            text=f"{p['desc']}  •  [ {p['package_id']} ]",
-            font=("Segoe UI", 8),
-            fg=THEME["text_secondary"],
-            bg=card.cget("bg"),
-            anchor="w",
-            cursor="hand2"
-        )
-        desc_lbl.pack(fill="x", anchor="w", pady=(3, 0))
-        desc_lbl.bind("<Button-1>", _toggle)
-
-        # Sağ: Durum Rozeti (Bekliyor / Kuruluyor / Başarılı)
-        cur_text, cur_color = self.program_statuses.get(pid, ("⚪ Bekliyor", THEME["text_muted"]))
-        status_lbl = tk.Label(
-            card,
-            text=cur_text,
-            font=("Segoe UI", 9, "bold"),
-            fg=cur_color,
-            bg=card.cget("bg"),
-            padx=10,
-            pady=4
-        )
-        status_lbl.pack(side="right")
-        self.status_labels[pid] = status_lbl
-
-        # Kartın her yerine tıklayınca seç / kaldır
-        for w in (rcard, card, left_box, top_line, type_badge, status_lbl):
-            w.bind("<Button-1>", _toggle)
-            w.configure(cursor="hand2")
-
-        # Üzerine gelince hafif vurgu (seçili değilse)
-        def _pointer_inside():
-            x, y = rcard.winfo_pointerxy()
-            return (rcard.winfo_rootx() <= x < rcard.winfo_rootx() + rcard.winfo_width()
-                    and rcard.winfo_rooty() <= y < rcard.winfo_rooty() + rcard.winfo_height())
-
-        def _card_enter(_e):
-            if not var.get():
-                rcard.set_colors(THEME["bg_card"], THEME["border_light"])
-
-        def _card_leave(_e):
-            if not var.get() and not _pointer_inside():
-                rcard.set_colors(THEME["bg_card"], THEME["border"])
-
-        for w in (rcard, card):
-            w.bind("<Enter>", _card_enter, add="+")
-            w.bind("<Leave>", _card_leave, add="+")
-
-        # Checkbox değiştiğinde kart rengini dinamik güncelle
-        def _on_val_change(*args):
-            if not rcard.winfo_exists():
-                return
-            is_checked = var.get()
-            bg_c = THEME["bg_card_selected"] if is_checked else THEME["bg_card"]
-            border_c = THEME["border_selected"] if is_checked else THEME["border"]
-            rcard.set_colors(bg_c, border_c)
-            left_box.configure(bg=bg_c)
-            top_line.configure(bg=bg_c)
-            cb.set_bg(bg_c)
-            title_lbl.configure(bg=bg_c)
-            desc_lbl.configure(bg=bg_c)
-            status_lbl.configure(bg=bg_c)
-
-        var.trace_add("write", _on_val_change)
+        status = self.program_statuses.get(pid, ("⚪ Bekliyor", THEME["text_muted"]))
+        self.card_frames[pid] = ProgramCard(self.scrollable_frame, p, self.selected_vars[pid], status)
 
     def update_stats(self):
         selected_count = sum(1 for v in self.selected_vars.values() if v.get())
-        total_count = len(PROGRAMS)
+        total_count = sum(1 for p in PROGRAMS if p.get("type") != "web")
 
         winget_count = sum(1 for p in PROGRAMS if self.selected_vars[p["id"]].get() and p.get("type") == "winget")
         pip_count = sum(1 for p in PROGRAMS if self.selected_vars[p["id"]].get() and p.get("type") == "pip")
@@ -1209,9 +1220,9 @@ class SuperInstallerApp:
                 continue
             if cid == "all":
                 sel = sum(1 for v in self.selected_vars.values() if v.get())
-                tot = len(PROGRAMS)
+                tot = sum(1 for p in PROGRAMS if p.get("type") != "web")
             else:
-                cat_progs = [p for p in PROGRAMS if p["category"] == cid]
+                cat_progs = [p for p in PROGRAMS if p["category"] == cid and p.get("type") != "web"]
                 sel = sum(1 for p in cat_progs if self.selected_vars[p["id"]].get())
                 tot = len(cat_progs)
 
@@ -1270,8 +1281,9 @@ class SuperInstallerApp:
     def set_program_status(self, pid, text, color):
         self.program_statuses[pid] = (text, color)
         def _update():
-            if pid in self.status_labels and self.status_labels[pid].winfo_exists():
-                self.status_labels[pid].configure(text=text, fg=color)
+            card = self.card_frames.get(pid)
+            if card is not None and card.winfo_exists():
+                card.set_status(text, color)
         self.root.after(0, _update)
 
     def _run_install_thread(self, target_programs):

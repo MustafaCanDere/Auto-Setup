@@ -9,7 +9,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from programlar_db import CATEGORIES, PROGRAMS, PRESETS  # noqa: E402
 
-ALLOWED_TYPES = {"winget", "pip", "git_repo", "direct_zip", "direct_exe"}
+ALLOWED_TYPES = {"winget", "pip", "git_repo", "direct_zip", "direct_exe", "web"}
 REQUIRED_KEYS = ("id", "name", "category", "type", "package_id", "desc")
 
 
@@ -44,9 +44,20 @@ class TestProgramDatabase(unittest.TestCase):
 
     def test_direct_zip_uses_https(self):
         for p in PROGRAMS:
-            if p["type"] in ("direct_zip", "direct_exe"):
+            if p["type"] in ("direct_zip", "direct_exe", "web"):
                 self.assertTrue(p["package_id"].startswith("https://"),
                                 f"{p['id']}: indirme adresi https olmalı")
+
+    def test_web_entries_never_in_presets(self):
+        # "web" türü kurulum yapmaz, yalnızca resmî sayfayı açar: toplu seçime girmemeli
+        web_ids = {p["id"] for p in PROGRAMS if p["type"] == "web"}
+        self.assertTrue(web_ids, "web türünde program yok")
+        for key, preset in PRESETS.items():
+            self.assertFalse(web_ids & set(preset["ids"]), f"'{key}' profili web girdisi içeriyor")
+
+    def test_unique_package_ids(self):
+        dupes = [k for k, c in Counter((p["type"], p["package_id"].lower()) for p in PROGRAMS).items() if c > 1]
+        self.assertEqual(dupes, [], f"Aynı paket iki kez eklenmiş: {dupes}")
 
     def test_winget_ids_look_valid(self):
         # Winget kimlikleri "Yayinci.Paket" biçimindedir, boşluk içermez

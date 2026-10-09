@@ -21,8 +21,9 @@
 Yeni bir bilgisayar kurarken onlarca siteye girip tek tek program indirmek zaman kaybı. Atölye, mühendislik ve yazılım araçlarını tek pencerede toplar: işaretle, **Seçilenleri Kur**'a bas, gerisini o halletsin.
 
 - **Harici bağımlılık yok.** Sadece standart Python (Tkinter).
-- **275 araç, 15 kategori:** yapay zeka, siber güvenlik, yazılım, DevOps, donanım ve **her mühendislik dalına özel niş araçlar** (makine, elektrik-elektronik, inşaat/harita, kimya/biyo, uzay/endüstri, matematik/bilim).
-- **14 hazır profil:** Yapay Zeka, Siber Güvenlik, Yazılım, DevOps, Donanım, Tasarım ve her mühendislik dalı için bir profil. Tek tıkla bir alanın tüm araçlarını seç.
+- **367 kurulabilir araç, 16 kategori:** iş yeri araçları, yapay zeka, siber güvenlik, yazılım, DevOps, donanım ve **her mühendislik dalına özel araçlar** (makine, elektrik-elektronik, inşaat/harita, kimya/biyo, uzay/endüstri, matematik/bilim).
+- **47 ticari yazılım için resmî sayfa:** SolidWorks, AutoCAD, Revit, MATLAB, ANSYS, TIA Portal, Altium ve benzerleri lisans gerektirir ve winget'te yoktur. Kartına tıklayınca satıcının resmî sayfası açılır, Atölye bunlar için hiçbir şey indirmez veya kurmaz. Ücretsiz görüntüleyiciler (eDrawings, DWG TrueView, Navisworks Freedom, JT2Go) ise normal kurulur.
+- **16 hazır profil:** İş Yeri Paketi, Yapay Zeka, Siber Güvenlik, Yazılım, DevOps, Donanım, Tasarım ve her mühendislik dalı için bir profil. Tek tıkla bir alanın tüm araçlarını seç.
 - **Canlı arama** ve kategori filtresi.
 - **Üç kurulum yolu:** Winget (sistem programları), pip (Python paketleri), git (açık kaynak projeler, `requirements.txt` otomatik kurulur).
 - **Yumuşak, Apple tarzı arayüz:** yuvarlak köşeler, özel onay kutuları, açık tema.
