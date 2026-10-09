@@ -10,16 +10,23 @@
 
 </div>
 
+<div align="center">
+
+![Kurulum ekranı](docs/loading.png)
+
+</div>
+
 ## Neden Atölye?
 
 Yeni bir bilgisayar kurarken onlarca siteye girip tek tek program indirmek zaman kaybı. Atölye, mühendislik ve yazılım araçlarını tek pencerede toplar: işaretle, **Seçilenleri Kur**'a bas, gerisini o halletsin.
 
 - **Harici bağımlılık yok.** Sadece standart Python (Tkinter).
-- **222 araç, 9 kategori:** yapay zeka, siber güvenlik, yazılım, DevOps, donanım, tasarım ve daha fazlası.
-- **Hazır profiller:** Yapay Zeka, Siber Güvenlik, Yazılım, DevOps, Donanım, Tasarım. Tek tıkla bir alanın tüm araçlarını seç.
+- **275 araç, 15 kategori:** yapay zeka, siber güvenlik, yazılım, DevOps, donanım ve **her mühendislik dalına özel niş araçlar** (makine, elektrik-elektronik, inşaat/harita, kimya/biyo, uzay/endüstri, matematik/bilim).
+- **14 hazır profil:** Yapay Zeka, Siber Güvenlik, Yazılım, DevOps, Donanım, Tasarım ve her mühendislik dalı için bir profil. Tek tıkla bir alanın tüm araçlarını seç.
 - **Canlı arama** ve kategori filtresi.
 - **Üç kurulum yolu:** Winget (sistem programları), pip (Python paketleri), git (açık kaynak projeler, `requirements.txt` otomatik kurulur).
-- **Seçimlerini hatırlar** ve kurulumu canlı konsolda gösterir.
+- **Yumuşak, Apple tarzı arayüz:** yuvarlak köşeler, özel onay kutuları, açık tema.
+- **Yükleme ekranı:** canlı ilerleme, sayaçlar (kuruldu / zaten kurulu / hata) ve bitiş özeti. Seçimlerini hatırlar, ayrıntılar alt konsolda.
 
 ## Hızlı başlangıç
 

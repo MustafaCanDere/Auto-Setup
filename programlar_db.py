@@ -15,6 +15,12 @@ CATEGORIES = [
     {"id": "devops", "name": "DevOps & Bulut & Veritabanı", "icon": "☁️"},
     {"id": "productivity", "name": "Verimlilik & Ofis & Sistem", "icon": "🚀"},
     {"id": "python_ai", "name": "Python AI / ML Pip Paketleri", "icon": "🐍"},
+    {"id": "mech", "name": "Makine, Üretim & CAD", "icon": "🔧"},
+    {"id": "elec", "name": "Elektrik, Elektronik & Otomasyon", "icon": "🔌"},
+    {"id": "civil", "name": "İnşaat, Harita & Çevre", "icon": "🏗️"},
+    {"id": "chembio", "name": "Kimya, Biyo & Tıp", "icon": "🧪"},
+    {"id": "aero", "name": "Uzay, Havacılık & Endüstri", "icon": "🛰️"},
+    {"id": "science", "name": "Matematik & Bilimsel Hesap", "icon": "📐"},
 ]
 
 PROGRAMS = [
@@ -2359,6 +2365,205 @@ PROGRAMS = [
     },
 ]
 
+
+# -------------------------------------------------------------
+# 🔬 MÜHENDİSLİK DALLARINA ÖZEL NİŞ ARAÇLAR
+# Winget kimlikleri ve pip paket adları eklenmeden önce tek tek doğrulanmıştır.
+# -------------------------------------------------------------
+def _p(pid, name, category, ptype, package_id, desc, tags):
+    return {
+        "id": pid, "name": name, "category": category, "type": ptype,
+        "package_id": package_id, "desc": desc, "tags": tags, "default": False,
+    }
+
+
+PROGRAMS += [
+    # 🔧 Makine, Üretim & CAD
+    _p("openscad", "OpenSCAD", "mech", "winget", "OpenSCAD.OpenSCAD",
+       "Kodla parametrik 3D katı modelleme: ölçüleri değiştir, parça kendini yeniden çizsin",
+       ["cad", "3d", "parametrik", "makine", "openscad"]),
+    _p("librecad", "LibreCAD", "mech", "winget", "LibreCAD.LibreCAD",
+       "Ücretsiz 2D CAD: teknik resim ve DXF çizimi",
+       ["cad", "2d", "dxf", "teknik resim", "makine"]),
+    _p("fusion360", "Autodesk Fusion", "mech", "winget", "Autodesk.Fusion",
+       "Bulut tabanlı CAD/CAM/CAE. Kişisel ve öğrenci kullanımı için ücretsiz plan sunar, lisans koşullarını kontrol et",
+       ["cad", "cam", "cae", "autodesk", "fusion", "makine"]),
+    _p("prusaslicer", "PrusaSlicer", "mech", "winget", "Prusa3D.PrusaSlicer",
+       "3D yazıcı dilimleyici: destek, dolgu ve baskı profili ayarları",
+       ["3d yazici", "slicer", "prusa", "uretim"]),
+    _p("bambustudio", "Bambu Studio", "mech", "winget", "Bambulab.Bambustudio",
+       "Bambu Lab yazıcıları için dilimleyici ve baskı yöneticisi",
+       ["3d yazici", "slicer", "bambu", "uretim"]),
+    _p("paraview", "ParaView", "mech", "winget", "Kitware.ParaView",
+       "CFD, FEA ve bilimsel simülasyon sonuçlarını görselleştirme platformu",
+       ["cfd", "fea", "simulasyon", "gorsellestirme", "vtk"]),
+    _p("meshlab", "MeshLab", "mech", "winget", "CNRISTI.MeshLab",
+       "3D tarama ve mesh temizleme, onarma, sadeleştirme aracı",
+       ["mesh", "3d tarama", "stl", "ters muhendislik"]),
+    _p("pip_cad", "Python CAD Paketi (CadQuery, build123d, trimesh, PyVista)", "mech", "pip",
+       "cadquery build123d trimesh pyvista",
+       "Python ile parametrik CAD, mesh işleme ve 3D görselleştirme",
+       ["cad", "python", "cadquery", "3d", "mesh"]),
+
+    # 🔌 Elektrik, Elektronik & Otomasyon
+    _p("ltspice", "LTspice", "elec", "winget", "AnalogDevices.LTspice",
+       "Analog Devices'ın ücretsiz, hızlı SPICE devre simülatörü",
+       ["spice", "devre", "simulasyon", "analog", "elektronik"]),
+    _p("thonny", "Thonny", "elec", "winget", "AivarAnnamaa.Thonny",
+       "MicroPython ve Raspberry Pi Pico için sade Python IDE'si",
+       ["micropython", "raspberry pi", "pico", "python", "ide"]),
+    _p("rpi_imager", "Raspberry Pi Imager", "elec", "winget", "RaspberryPiFoundation.RaspberryPiImager",
+       "Raspberry Pi için işletim sistemini SD karta yazan resmî araç",
+       ["raspberry pi", "sd kart", "iot", "linux"]),
+    _p("etcher", "balenaEtcher", "elec", "winget", "Balena.Etcher",
+       "ISO ve IMG dosyalarını USB/SD karta güvenle yazar",
+       ["usb", "iso", "flash", "sd kart"]),
+    _p("zadig", "Zadig", "elec", "winget", "akeo.ie.Zadig",
+       "USB aygıtları için WinUSB/libusb sürücüsü kurar (programlayıcı, SDR, logic analyzer)",
+       ["usb", "surucu", "libusb", "sdr", "programlayici"]),
+    _p("mosquitto", "Eclipse Mosquitto", "elec", "winget", "EclipseFoundation.Mosquitto",
+       "Hafif MQTT broker: IoT cihazlarının haberleşme omurgası",
+       ["mqtt", "iot", "broker", "otomasyon"]),
+    _p("mqtt_explorer", "MQTT Explorer", "elec", "winget", "thomasnordquist.MQTT-Explorer",
+       "MQTT konularını ağaç yapısında izleme ve test aracı",
+       ["mqtt", "iot", "izleme", "otomasyon"]),
+    _p("grafana", "Grafana OSS", "elec", "winget", "GrafanaLabs.Grafana.OSS",
+       "Sensör ve sistem verisi için canlı pano ve alarm paneli",
+       ["grafana", "dashboard", "izleme", "iot", "scada"]),
+    _p("jlink", "SEGGER J-Link Sürücüleri", "elec", "winget", "NordicSemiconductor.JLink",
+       "ARM Cortex ve Nordic çipleri için J-Link programlama/hata ayıklama sürücüleri",
+       ["jlink", "swd", "debug", "nordic", "arm"]),
+    _p("arm_gcc", "Arm GNU Toolchain", "elec", "winget", "Arm.GnuArmEmbeddedToolchain",
+       "Cortex-M mikrodenetleyiciler için gcc derleyici ve hata ayıklayıcı seti",
+       ["arm", "gcc", "cortex-m", "stm32", "derleyici"]),
+    _p("pip_control_rf", "Kontrol & RF Paketi (python-control, schemdraw, scikit-rf)", "elec", "pip",
+       "python-control schemdraw scikit-rf",
+       "Kontrol sistemleri analizi, devre şeması çizimi ve RF/mikrodalga hesapları",
+       ["kontrol", "pid", "rf", "devre semasi", "python"]),
+
+    # 🏗️ İnşaat, Harita & Çevre
+    _p("qgis", "QGIS", "civil", "winget", "OSGeo.QGIS",
+       "Açık kaynak coğrafi bilgi sistemi: harita, arazi ve koordinat analizi",
+       ["gis", "harita", "cografi", "jeodezi", "arazi"]),
+    _p("google_earth_pro", "Google Earth Pro", "civil", "winget", "Google.EarthPro",
+       "Uydu görüntüsü, yüksekliklendirme ve alan/mesafe ölçümü",
+       ["uydu", "harita", "olcum", "arazi"]),
+    _p("cloudcompare", "CloudCompare", "civil", "winget", "CloudCompare.CloudCompare",
+       "Lazer tarama nokta bulutu işleme ve karşılaştırma",
+       ["nokta bulutu", "lidar", "tarama", "insaat"]),
+    _p("sweethome3d", "Sweet Home 3D", "civil", "winget", "eTeks.SweetHome3D",
+       "Hızlı iç mekân ve kat planı tasarımı",
+       ["mimari", "ic mekan", "plan", "3d"]),
+    _p("pip_geo", "Coğrafi Veri Paketi (GeoPandas, Shapely, PyProj, Folium, Rasterio)", "civil", "pip",
+       "geopandas shapely pyproj folium rasterio",
+       "Python ile konum verisi, koordinat dönüşümü ve harita üretimi",
+       ["gis", "geopandas", "harita", "koordinat", "python"]),
+    _p("pip_structural", "Yapı Analizi Paketi (anaStruct, sectionproperties, IfcOpenShell)", "civil", "pip",
+       "anastruct sectionproperties ifcopenshell",
+       "2B yapı analizi, kesit özellikleri ve BIM/IFC dosyası okuma",
+       ["yapi", "statik", "kesit", "bim", "ifc", "python"]),
+
+    # 🧪 Kimya, Biyo & Tıp
+    _p("avogadro", "Avogadro", "chembio", "winget", "Avogadro.Avogadro",
+       "Moleküler editör ve görselleştirici: yapı çizimi ve geometri optimizasyonu",
+       ["molekul", "kimya", "gorsellestirme", "hesaplamali kimya"]),
+    _p("pip_chem", "Kimya Mühendisliği Paketi (RDKit, Cantera, thermo, chemicals)", "chembio", "pip",
+       "rdkit cantera thermo chemicals",
+       "Kimyasal bilişim, yanma/reaksiyon kinetiği ve termodinamik özellik hesapları",
+       ["kimya", "rdkit", "cantera", "termodinamik", "python"]),
+    _p("pip_bio", "Biyomedikal Paketi (Biopython, pydicom, nibabel, SimpleITK)", "chembio", "pip",
+       "biopython pydicom nibabel SimpleITK",
+       "Biyolojik dizi analizi, DICOM ve MR/BT görüntü işleme",
+       ["biyomedikal", "dicom", "tibbi goruntu", "biyoinformatik", "python"]),
+
+    # 🛰️ Uzay, Havacılık & Endüstri
+    _p("stellarium", "Stellarium", "aero", "winget", "Stellarium.Stellarium",
+       "Gerçek zamanlı gökyüzü ve gezegen simülatörü",
+       ["astronomi", "gokyuzu", "uzay", "simulasyon"]),
+    _p("openrocket", "OpenRocket", "aero", "winget", "OpenRocket.OpenRocket",
+       "Model roket tasarımı ve uçuş simülasyonu (kararlılık, irtifa, itki)",
+       ["roket", "havacilik", "simulasyon", "itki"]),
+    _p("flightgear", "FlightGear", "aero", "winget", "FlightGear.FlightGear",
+       "Açık kaynak uçuş simülatörü, aerodinamik modellerle uçuş denemesi",
+       ["ucus", "simulator", "havacilik", "aerodinamik"]),
+    _p("pip_astro", "Astrodinamik Paketi (Astropy, Skyfield, sgp4)", "aero", "pip",
+       "astropy skyfield sgp4",
+       "Gök cismi hesapları, uydu yörünge tahmini (TLE) ve astronomi verisi",
+       ["astropy", "uydu", "yorunge", "tle", "python"]),
+    _p("pip_ops", "Optimizasyon & Simülasyon (OR-Tools, PuLP, SimPy, Pyomo, pymoo)", "aero", "pip",
+       "ortools pulp simpy pyomo pymoo",
+       "Doğrusal programlama, rota/çizelge optimizasyonu ve kesikli olay simülasyonu (endüstri mühendisliği)",
+       ["optimizasyon", "endustri", "lojistik", "simulasyon", "python"]),
+
+    # 📐 Matematik & Bilimsel Hesap
+    _p("octave", "GNU Octave", "science", "winget", "GNU.Octave",
+       "MATLAB uyumlu, ücretsiz sayısal hesaplama ortamı",
+       ["matlab", "octave", "sayisal", "matris"]),
+    _p("scilab", "Scilab", "science", "winget", "Scilab.Scilab",
+       "Xcos blok diyagramı ile birlikte gelen sayısal hesaplama ve simülasyon ortamı",
+       ["scilab", "xcos", "simulasyon", "matlab"]),
+    _p("julia", "Julia", "science", "winget", "Julialang.Julia",
+       "Bilimsel hesaplama için yüksek performanslı dil",
+       ["julia", "bilimsel", "hesaplama", "dil"]),
+    _p("r_lang", "R", "science", "winget", "RProject.R",
+       "İstatistik ve veri analizi dili",
+       ["r", "istatistik", "veri analizi"]),
+    _p("rstudio", "RStudio", "science", "winget", "Posit.RStudio",
+       "R için tam özellikli IDE",
+       ["r", "rstudio", "istatistik", "ide"]),
+    _p("jasp", "JASP", "science", "winget", "JASP.JASP",
+       "Tıkla-çalıştır istatistik: hipotez testleri ve Bayes analizi",
+       ["istatistik", "jasp", "hipotez", "anova"]),
+    _p("gnuplot", "gnuplot", "science", "winget", "gnuplot.gnuplot",
+       "Komut satırından yayın kalitesinde grafik çizimi",
+       ["grafik", "gnuplot", "cizim", "veri"]),
+    _p("miktex", "MiKTeX", "science", "winget", "MiKTeX.MiKTeX",
+       "Windows için LaTeX dağıtımı: tez, makale ve rapor yazımı",
+       ["latex", "tez", "makale", "yayin"]),
+    _p("texstudio", "TeXstudio", "science", "winget", "TeXstudio.TeXstudio",
+       "LaTeX için editör: otomatik tamamlama ve PDF önizleme",
+       ["latex", "editor", "tez", "makale"]),
+    _p("typst", "Typst", "science", "winget", "Typst.Typst",
+       "LaTeX'e modern ve hızlı alternatif dizgi sistemi",
+       ["typst", "dizgi", "rapor", "latex"]),
+    _p("pandoc", "Pandoc", "science", "winget", "JohnMacFarlane.Pandoc",
+       "Markdown, Word, PDF, LaTeX arası belge dönüştürücü",
+       ["pandoc", "donusturucu", "markdown", "belge"]),
+    _p("zotero", "Zotero", "science", "winget", "DigitalScholar.Zotero",
+       "Kaynakça ve makale yöneticisi: atıf ve referans listesi üretir",
+       ["kaynakca", "referans", "makale", "tez"]),
+
+    # 🤖 Yapay zekanın niş araçları
+    _p("netron", "Netron", "ai", "winget", "LutzRoeder.Netron",
+       "Sinir ağı modellerini (ONNX, TFLite, PyTorch) katman katman görselleştirir",
+       ["model", "gorsellestirme", "onnx", "sinir agi", "ai"]),
+    _p("pip_yolo", "Ultralytics (YOLO)", "python_ai", "pip", "ultralytics",
+       "Nesne tespiti, segmentasyon ve takip için YOLO modelleri",
+       ["yolo", "goruntu isleme", "nesne tespiti", "ultralytics", "ai"]),
+    _p("pip_mlops", "Deney Takibi (W&B, TensorBoard, Optuna)", "python_ai", "pip",
+       "wandb tensorboard optuna",
+       "Model eğitimi takibi, grafikler ve otomatik hiperparametre araması",
+       ["mlops", "wandb", "tensorboard", "optuna", "ai"]),
+    _p("pip_onnx", "ONNX & ONNX Runtime", "python_ai", "pip", "onnx onnxruntime",
+       "Modelleri ortak formata aktarıp CPU/GPU üzerinde hızlı çalıştırma",
+       ["onnx", "cikarim", "model", "ai"]),
+    _p("pip_streamlit", "Streamlit", "python_ai", "pip", "streamlit",
+       "Birkaç satır Python ile model ve veri uygulaması arayüzü",
+       ["streamlit", "arayuz", "demo", "ai"]),
+
+    # 🔬 Tersine mühendislik ve hata ayıklama
+    _p("imhex", "ImHex", "security", "winget", "WerWolv.ImHex",
+       "Desenli, modern hex editör: ikili dosya formatlarını çözümleme",
+       ["hex", "binary", "tersine muhendislik", "firmware"]),
+    _p("windbg", "WinDbg", "security", "winget", "Microsoft.WinDbg",
+       "Microsoft'un çekirdek ve uygulama hata ayıklayıcısı",
+       ["debugger", "windbg", "crash dump", "surucu"]),
+    _p("x64dbg", "x64dbg", "security", "winget", "x64dbg.x64dbg",
+       "Windows için açık kaynak 32/64 bit hata ayıklayıcı",
+       ["debugger", "x64dbg", "tersine muhendislik", "exe"]),
+]
+
+
 # Hazır Profiller (Hızlı Seçim Şablonları)
 PRESETS = {
     "all": {
@@ -2438,6 +2643,43 @@ PRESETS = {
             "postman", "dbeaver", "ripgrep", "jq_cli",
             "git", "vscode", "windows_terminal", "everything", "sevenzip", "obsidian"
         ],
+    },
+    "mech_eng": {
+        "name": "🔧 Makine & Üretim Mühendisi",
+        "desc": "OpenSCAD, FreeCAD, Fusion, dilimleyiciler, ParaView, MeshLab, CadQuery",
+        "ids": [p["id"] for p in PROGRAMS if p["category"] == "mech"]
+        + ["freecad", "blender", "cura", "vscode", "git", "pip_scientific", "pip_viz", "sevenzip"],
+    },
+    "elec_eng": {
+        "name": "🔌 Elektrik-Elektronik Mühendisi",
+        "desc": "KiCad, LTspice, Arduino, PlatformIO, MQTT, Grafana, J-Link, Arm GCC",
+        "ids": [p["id"] for p in PROGRAMS if p["category"] == "elec"]
+        + ["kicad", "arduino_ide", "platformio_cli", "wireshark", "putty", "teraterm",
+           "serial_studio", "esptool", "openocd", "vscode", "git", "pip_scientific", "pip_hardware"],
+    },
+    "civil_eng": {
+        "name": "🏗️ İnşaat & Harita Mühendisi",
+        "desc": "QGIS, Google Earth Pro, CloudCompare, Sweet Home 3D, GeoPandas, yapı analizi",
+        "ids": [p["id"] for p in PROGRAMS if p["category"] == "civil"]
+        + ["freecad", "drawio", "vscode", "git", "pip_scientific", "pip_viz"],
+    },
+    "chem_bio": {
+        "name": "🧪 Kimya & Biyomedikal Mühendisi",
+        "desc": "Avogadro, RDKit, Cantera, Biopython, DICOM/MR araçları, R, JASP, Zotero",
+        "ids": [p["id"] for p in PROGRAMS if p["category"] == "chembio"]
+        + ["r_lang", "rstudio", "jasp", "zotero", "pip_scientific", "pip_viz", "vscode", "git"],
+    },
+    "aero_ind": {
+        "name": "🛰️ Uzay, Havacılık & Endüstri Mühendisi",
+        "desc": "OpenRocket, FlightGear, Stellarium, Astropy, OR-Tools, PuLP, SimPy",
+        "ids": [p["id"] for p in PROGRAMS if p["category"] == "aero"]
+        + ["octave", "julia", "pip_scientific", "pip_viz", "vscode", "git"],
+    },
+    "science_math": {
+        "name": "📐 Matematik & Bilimsel Hesap",
+        "desc": "Octave, Scilab, Julia, R, LaTeX, Typst, Pandoc, Zotero, gnuplot",
+        "ids": [p["id"] for p in PROGRAMS if p["category"] == "science"]
+        + ["pip_scientific", "pip_viz", "pip_jupyter", "vscode", "git"],
     },
     "none": {
         "name": "🧹 Tümünü Temizle",

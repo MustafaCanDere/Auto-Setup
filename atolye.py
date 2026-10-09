@@ -62,19 +62,38 @@ THEME = {
     "terminal_fg": "#30d158",
 }
 
-def _round_rect(cv, x1, y1, x2, y2, r, **kw):
-    """Canvas üzerinde yuvarlak köşeli dikdörtgen çizer."""
-    r = max(0, min(r, (x2 - x1) / 2, (y2 - y1) / 2))
-    pts = [x1 + r, y1, x2 - r, y1, x2, y1, x2, y1 + r, x2, y2 - r, x2, y2,
-           x2 - r, y2, x1 + r, y2, x1, y2, x1, y2 - r, x1, y1 + r, x1, y1]
-    return cv.create_polygon(pts, smooth=True, **kw)
+def _round_rect(cv, x1, y1, x2, y2, r, fill="", outline=None, width=1, tag="rr"):
+    """Canvas üzerinde tam yuvarlak köşeli dikdörtgen çizer (4 daire + 2 dikdörtgen).
+
+    Kenarlık için önce dış renkte, sonra `width` kadar içeride dolgu renginde ikinci bir katman çizilir.
+    Tüm parçalar `tag` etiketini taşır, böylece tek seferde silinebilir.
+    """
+    def layer(a, b, c, d, rad, color, sub):
+        rad = max(0, min(rad, (c - a) / 2, (d - b) / 2))
+        tags = (tag, sub)
+        if rad <= 0:
+            cv.create_rectangle(a, b, c, d, fill=color, outline="", tags=tags)
+            return
+        k = 2 * rad
+        for ox, oy in ((a, b), (c - k, b), (a, d - k), (c - k, d - k)):
+            cv.create_oval(ox, oy, ox + k, oy + k, fill=color, outline="", tags=tags)
+        cv.create_rectangle(a + rad, b, c - rad, d, fill=color, outline="", tags=tags)
+        cv.create_rectangle(a, b + rad, c, d - rad, fill=color, outline="", tags=tags)
+
+    if outline and outline != fill and width:
+        layer(x1, y1, x2, y2, r, outline, tag + "_o")
+        layer(x1 + width, y1 + width, x2 - width, y2 - width, r - width, fill, tag + "_i")
+    else:
+        layer(x1, y1, x2, y2, r, fill, tag + "_i")
 
 
 class RoundedFrame(tk.Canvas):
     """Yuvarlak köşeli çerçeve. İçerik `.body` çerçevesine eklenir."""
 
     def __init__(self, parent, fill, outline=None, radius=14, pad=(16, 12), width=200):
-        super().__init__(parent, bg=parent.cget("bg"), highlightthickness=0, bd=0, width=width, height=20)
+        # Başlangıç yüksekliği iç dolgudan büyük olmalı, yoksa içerik görünür alan dışında kalır ve hiç çizilmez
+        super().__init__(parent, bg=parent.cget("bg"), highlightthickness=0, bd=0,
+                         width=width, height=2 * pad[1] + 20)
         self.radius = radius
         self._fill = fill
         self._outline = outline or fill
@@ -84,27 +103,31 @@ class RoundedFrame(tk.Canvas):
         self._win = self.create_window(pad[0], pad[1], window=self.body, anchor="nw")
         self.bind("<Configure>", self._on_resize)
         self.body.bind("<Configure>", self._on_body)
+        self.after_idle(self._on_body)
 
-    def _on_body(self, _e):
-        self.configure(height=self.body.winfo_reqheight() + 2 * self._pad[1])
+    def _on_body(self, _e=None):
+        if not self.winfo_exists():
+            return
+        want = self.body.winfo_reqheight() + 2 * self._pad[1]
+        if int(float(self.cget("height"))) != want:
+            self.configure(height=want)
 
     def _on_resize(self, e):
         self.itemconfigure(self._win, width=max(1, e.width - 2 * self._pad[0]))
         self._redraw(e.width, e.height)
 
     def _redraw(self, w, h):
-        if self._shape is not None:
-            self.delete(self._shape)
-        self._shape = _round_rect(self, 1, 1, w - 1, h - 1, self.radius,
-                                  fill=self._fill, outline=self._outline, width=1)
-        self.tag_lower(self._shape)
+        self.delete("rr")
+        _round_rect(self, 0, 0, w - 1, h - 1, self.radius, fill=self._fill, outline=self._outline, width=1)
+        self.tag_lower("rr")
 
     def set_colors(self, fill, outline=None):
         self._fill = fill
         self._outline = outline or fill
         self.body.configure(bg=fill)
-        if self._shape is not None:
-            self.itemconfigure(self._shape, fill=self._fill, outline=self._outline)
+        w, h = self.winfo_width(), self.winfo_height()
+        if w > 2 and h > 2:
+            self._redraw(w, h)
 
 
 class RoundedButton(tk.Canvas):
@@ -132,7 +155,7 @@ class RoundedButton(tk.Canvas):
             return
         self.delete("all")
         fg = self._fg if self._state == "normal" else self._disabled_fg
-        _round_rect(self, 0, 0, w, h, self._radius, fill=self._bg, outline=self._bg)
+        _round_rect(self, 0, 0, w - 1, h - 1, self._radius, fill=self._bg, outline=self._bg)
         self.create_text(w / 2, h / 2, text=self._text, fill=fg, font=self._font)
 
     def _click(self, _e):
@@ -170,6 +193,197 @@ class RoundedButton(tk.Canvas):
             self._draw()
 
     config = configure
+
+
+class RoundCheck(tk.Canvas):
+    """Yuvarlak köşeli onay kutusu: seçilince mavi dolar ve beyaz tik çizer."""
+
+    def __init__(self, parent, variable, bg, size=22, radius=7):
+        super().__init__(parent, width=size, height=size, bg=bg, highlightthickness=0, bd=0, cursor="hand2")
+        self._var = variable
+        self._size = size
+        self._radius = radius
+        self.bind("<Button-1>", lambda _e: self._var.set(not self._var.get()))
+        self.bind("<Enter>", lambda _e: self._draw(hover=True))
+        self.bind("<Leave>", lambda _e: self._draw())
+        self._var.trace_add("write", lambda *_a: self._draw())
+        self._draw()
+
+    def _draw(self, hover=False):
+        if not self.winfo_exists():
+            return
+        self.delete("all")
+        s = self._size
+        if self._var.get():
+            _round_rect(self, 1, 1, s - 1, s - 1, self._radius,
+                        fill=THEME["accent_blue"], outline=THEME["accent_blue"])
+            self.create_line(s * 0.28, s * 0.53, s * 0.44, s * 0.69, s * 0.75, s * 0.33,
+                             fill="#ffffff", width=2.5, capstyle="round", joinstyle="round")
+        else:
+            outline = THEME["accent_blue"] if hover else "#b4b4bc"
+            _round_rect(self, 1.5, 1.5, s - 1.5, s - 1.5, self._radius,
+                        fill="#ffffff", outline=outline, width=1.5)
+
+    def set_bg(self, bg):
+        self.configure(bg=bg)
+
+
+class InstallOverlay(tk.Frame):
+    """Kurulum sırasında pencerenin üstünü kaplayan yükleme ekranı."""
+
+    BAR_W = 480
+
+    def __init__(self, parent, on_cancel):
+        super().__init__(parent, bg=THEME["bg_main"])
+        self._on_cancel = on_cancel
+        self._target = 0.0
+        self._shown = 0.0
+        self._angle = 0
+        self._running = False
+        self._loop_id = None
+        bg = THEME["bg_card"]
+
+        self.card = RoundedFrame(self, fill=bg, outline=THEME["border"], radius=26, pad=(44, 36), width=620)
+        self.card.place(relx=0.5, rely=0.5, anchor="center")
+        body = self.card.body
+
+        self.icon = tk.Canvas(body, width=72, height=72, bg=bg, highlightthickness=0)
+        self.icon.pack(pady=(0, 14))
+
+        self.title = tk.Label(body, text="Kurulum sürüyor", font=("Segoe UI Semibold", 20),
+                              fg=THEME["text_primary"], bg=bg)
+        self.title.pack()
+        self.subtitle = tk.Label(body, text="Hazırlanıyor...", font=("Segoe UI", 11),
+                                 fg=THEME["text_secondary"], bg=bg)
+        self.subtitle.pack(pady=(4, 18))
+
+        self.bar = tk.Canvas(body, width=self.BAR_W, height=12, bg=bg, highlightthickness=0)
+        self.bar.pack()
+        self.percent = tk.Label(body, text="%0", font=("Segoe UI", 10, "bold"),
+                                fg=THEME["accent_blue"], bg=bg)
+        self.percent.pack(pady=(8, 16))
+
+        stats = tk.Frame(body, bg=bg)
+        stats.pack(fill="x")
+        self._count_labels = {}
+        for col, (key, label, color) in enumerate((
+                ("ok", "Kuruldu", THEME["accent_green"]),
+                ("skip", "Zaten kurulu", THEME["accent_yellow"]),
+                ("fail", "Hata", THEME["accent_red"]))):
+            stats.columnconfigure(col, weight=1, uniform="stat")
+            box = RoundedFrame(stats, fill=THEME["bg_main"], radius=14, pad=(12, 10), width=150)
+            box.grid(row=0, column=col, padx=5, sticky="ew")
+            num = tk.Label(box.body, text="0", font=("Segoe UI Semibold", 20), fg=color, bg=THEME["bg_main"])
+            num.pack()
+            tk.Label(box.body, text=label, font=("Segoe UI", 9), fg=THEME["text_secondary"],
+                     bg=THEME["bg_main"]).pack()
+            self._count_labels[key] = num
+
+        self.log_lbl = tk.Label(body, text="", font=("Consolas", 8), fg=THEME["text_muted"], bg=bg, anchor="w")
+        self.log_lbl.pack(fill="x", pady=(16, 0))
+
+        self.btn = RoundedButton(body, text="İptal Et", command=self._cancel_clicked,
+                                 bg=THEME["bg_main"], fg=THEME["accent_red"],
+                                 font=("Segoe UI", 10, "bold"), radius=18, padx=34, pady=9, parent_bg=bg)
+        self.btn.pack(pady=(18, 0))
+        self._draw_bar()
+        self._draw_spinner()
+
+    # --- dış arayüz ---------------------------------------------------
+    def begin(self, total):
+        self._target = self._shown = 0.0
+        self._running = True
+        self.title.configure(text="Kurulum sürüyor")
+        self.subtitle.configure(text=f"{total} öğe sırayla kuruluyor...")
+        for lbl in self._count_labels.values():
+            lbl.configure(text="0")
+        self.log_lbl.configure(text="")
+        self.btn.configure(text="İptal Et", bg=THEME["bg_main"], fg=THEME["accent_red"],
+                           command=self._cancel_clicked, state="normal")
+        self._loop()
+
+    def set_current(self, idx, total, name):
+        self.subtitle.configure(text=f"{name}  ·  {idx} / {total}")
+
+    def update_progress(self, done, total, ok, skip, fail):
+        self._target = done / total if total else 0.0
+        self._count_labels["ok"].configure(text=str(ok))
+        self._count_labels["skip"].configure(text=str(skip))
+        self._count_labels["fail"].configure(text=str(fail))
+
+    def set_log(self, text):
+        text = text.strip().splitlines()[-1] if text.strip() else ""
+        self.log_lbl.configure(text=text[:80] + ("…" if len(text) > 80 else ""))
+
+    def set_cancelling(self):
+        self.subtitle.configure(text="İptal ediliyor... Lütfen bekleyin.")
+        self.btn.configure(state="disabled")
+
+    def finish(self, ok, skip, fail, total, cancelled):
+        self._running = False
+        if self._loop_id:
+            self.after_cancel(self._loop_id)
+            self._loop_id = None
+        if not cancelled:
+            self._target = self._shown = 1.0
+        self._draw_bar()
+        self.percent.configure(text=f"%{int(self._shown * 100)}")
+        self._draw_done(cancelled, fail)
+        if cancelled:
+            self.title.configure(text="Kurulum durduruldu")
+        elif fail:
+            self.title.configure(text="Kurulum tamamlandı")
+        else:
+            self.title.configure(text="Hepsi hazır")
+        self.subtitle.configure(text=f"{ok} kuruldu  ·  {skip} zaten kuruluydu  ·  {fail} hata")
+        self.log_lbl.configure(text="Ayrıntılar alttaki konsolda.")
+        self.btn.configure(text="Kapat", bg=THEME["accent_blue"], fg="#ffffff",
+                           command=self.hide, state="normal")
+
+    def hide(self):
+        self.place_forget()
+
+    # --- iç işler -----------------------------------------------------
+    def _cancel_clicked(self):
+        self._on_cancel()
+
+    def _loop(self):
+        if not self._running:
+            return
+        self._angle = (self._angle - 14) % 360
+        self._draw_spinner()
+        diff = self._target - self._shown
+        if abs(diff) > 0.001:
+            self._shown += diff * 0.18
+            self._draw_bar()
+        self.percent.configure(text=f"%{int(self._shown * 100)}")
+        self._loop_id = self.after(33, self._loop)
+
+    def _draw_spinner(self):
+        c = self.icon
+        c.delete("all")
+        c.create_oval(8, 8, 64, 64, outline=THEME["bg_panel"], width=6)
+        c.create_arc(8, 8, 64, 64, start=self._angle, extent=100, style="arc",
+                     outline=THEME["accent_blue"], width=6)
+
+    def _draw_done(self, cancelled, fail):
+        c = self.icon
+        c.delete("all")
+        color = THEME["accent_yellow"] if (cancelled or fail) else THEME["accent_green"]
+        c.create_oval(4, 4, 68, 68, fill=color, outline=color)
+        if cancelled:
+            c.create_line(28, 24, 28, 48, fill="#ffffff", width=5, capstyle="round")
+            c.create_line(44, 24, 44, 48, fill="#ffffff", width=5, capstyle="round")
+        else:
+            c.create_line(22, 37, 32, 47, 50, 26, fill="#ffffff", width=5, capstyle="round", joinstyle="round")
+
+    def _draw_bar(self):
+        c = self.bar
+        c.delete("all")
+        _round_rect(c, 0, 0, self.BAR_W, 12, 6, fill=THEME["bg_panel"], outline=THEME["bg_panel"])
+        if self._shown > 0.001:
+            w = max(12, self.BAR_W * min(self._shown, 1.0))
+            _round_rect(c, 0, 0, w, 12, 6, fill=THEME["accent_blue"], outline=THEME["accent_blue"])
 
 
 class SuperInstallerApp:
@@ -367,9 +581,21 @@ class SuperInstallerApp:
         main_body.pack(side="top", fill="both", expand=True)
 
         # 2.A SOL KENAR ÇUBUĞU (KATEGORİLER & HAZIR PROFİLLER)
-        sidebar = tk.Frame(main_body, bg=THEME["bg_panel"], width=290, padx=14, pady=14)
-        sidebar.pack(side="left", fill="y")
-        sidebar.pack_propagate(False)
+        # Dış çerçeve sabit genişlikte; içerik kaydırılabilir, istatistik kutusu altta sabit kalır
+        self.sidebar_outer = tk.Frame(main_body, bg=THEME["bg_panel"], width=300)
+        self.sidebar_outer.pack(side="left", fill="y")
+        self.sidebar_outer.pack_propagate(False)
+
+        self.sidebar_canvas = tk.Canvas(self.sidebar_outer, bg=THEME["bg_panel"], highlightthickness=0, width=300)
+        sidebar = tk.Frame(self.sidebar_canvas, bg=THEME["bg_panel"], padx=14, pady=14)
+        sidebar_win = self.sidebar_canvas.create_window((0, 0), window=sidebar, anchor="nw")
+        sidebar.bind("<Configure>", lambda e: self.sidebar_canvas.configure(scrollregion=self.sidebar_canvas.bbox("all")))
+        self.sidebar_canvas.bind("<Configure>", lambda e: self.sidebar_canvas.itemconfigure(sidebar_win, width=e.width))
+        sidebar_scroll = ttk.Scrollbar(self.sidebar_outer, orient="vertical", command=self.sidebar_canvas.yview,
+                                       style="Dark.Vertical.TScrollbar")
+        self.sidebar_canvas.configure(yscrollcommand=sidebar_scroll.set)
+        sidebar_scroll.pack(side="right", fill="y")
+        self.sidebar_canvas.pack(side="left", fill="both", expand=True)
 
         # Sol Panel Başlığı
         cat_head = tk.Label(sidebar, text="KATEGORİLER", font=("Segoe UI", 9, "bold"), fg=THEME["text_muted"], bg=THEME["bg_panel"])
@@ -429,6 +655,12 @@ class SuperInstallerApp:
             ("hardware_embedded", "⚡ Donanım"),
             ("software_fullstack", "💻 Yazılım"),
             ("devops_cloud", "☁️ DevOps"),
+            ("mech_eng", "🔧 Makine"),
+            ("elec_eng", "🔌 Elektrik-Elektronik"),
+            ("civil_eng", "🏗️ İnşaat & Harita"),
+            ("chem_bio", "🧪 Kimya & Biyo"),
+            ("aero_ind", "🛰️ Uzay & Endüstri"),
+            ("science_math", "📐 Matematik & Bilim"),
         ]
 
         # Profiller 2 sütunlu ızgarada: sol panele sığar
@@ -454,9 +686,9 @@ class SuperInstallerApp:
             self.add_hover(p_btn, THEME["bg_card"], THEME["bg_card_hover"])
 
         # Sol Panel Alt İstatistik Kutusu
-        stat_card = RoundedFrame(sidebar, fill=THEME["bg_card"], radius=14, pad=(14, 10), width=240)
-        # before=cat_head: alt kutu önce yer ayırır, küçük pencerede kesilmez
-        stat_card.pack(side="bottom", fill="x", pady=(6, 0), before=cat_head)
+        stat_card = RoundedFrame(self.sidebar_outer, fill=THEME["bg_card"], radius=14, pad=(14, 10), width=240)
+        # before=: alt kutu önce yer ayırır, küçük pencerede kesilmez
+        stat_card.pack(side="bottom", fill="x", padx=14, pady=(6, 14), before=sidebar_scroll)
         stat_box = stat_card.body
 
         self.stat_label = tk.Label(
@@ -675,7 +907,12 @@ class SuperInstallerApp:
     def _on_mousewheel(self, event):
         if event.widget == self.terminal_text:
             return
-        self.canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+        # İşaretçi sol paneldeyse onu, değilse program listesini kaydır
+        in_sidebar = str(event.widget).startswith(str(self.sidebar_outer))
+        target = self.sidebar_canvas if in_sidebar else self.canvas
+        if target.yview() == (0.0, 1.0):
+            return
+        target.yview_scroll(int(-1 * (event.delta / 120)), "units")
 
     def _on_canvas_configure(self, event):
         self.canvas.itemconfig(self.canvas_window, width=event.width)
@@ -693,6 +930,8 @@ class SuperInstallerApp:
         def _append():
             self.terminal_text.insert(tk.END, message + "\n")
             self.terminal_text.see(tk.END)
+            if getattr(self, "overlay", None) is not None and self.is_installing:
+                self.overlay.set_log(message)
         self.root.after(0, _append)
 
     def clear_terminal(self):
@@ -833,19 +1072,8 @@ class SuperInstallerApp:
         top_line.pack(fill="x", anchor="w")
 
         # Özel Checkbutton
-        cb = tk.Checkbutton(
-            top_line,
-            variable=var,
-            text="",
-            bg=card.cget("bg"),
-            fg=THEME["accent_blue"],
-            activebackground=card.cget("bg"),
-            activeforeground=THEME["accent_blue"],
-            selectcolor="#ffffff",
-            relief="flat",
-            cursor="hand2"
-        )
-        cb.pack(side="left", padx=(0, 6))
+        cb = RoundCheck(top_line, variable=var, bg=card.cget("bg"))
+        cb.pack(side="left", padx=(0, 10))
 
         # Başlık Etiketi
         title_lbl = tk.Label(
@@ -952,7 +1180,7 @@ class SuperInstallerApp:
             rcard.set_colors(bg_c, border_c)
             left_box.configure(bg=bg_c)
             top_line.configure(bg=bg_c)
-            cb.configure(bg=bg_c, activebackground=bg_c)
+            cb.set_bg(bg_c)
             title_lbl.configure(bg=bg_c)
             desc_lbl.configure(bg=bg_c)
             status_lbl.configure(bg=bg_c)
@@ -1015,6 +1243,13 @@ class SuperInstallerApp:
         self.cancel_btn.configure(state="normal")
         self.progress_bar.configure(maximum=len(selected_programs), value=0)
 
+        # Yükleme ekranını göster
+        if getattr(self, "overlay", None) is None:
+            self.overlay = InstallOverlay(self.root, self.cancel_installation)
+        self.overlay.begin(len(selected_programs))
+        self.overlay.place(x=0, y=0, relwidth=1, relheight=1)
+        self.overlay.lift()
+
         # Kurulum İş Parçacığını Başlat
         thread = threading.Thread(target=self._run_install_thread, args=(selected_programs,), daemon=True)
         thread.start()
@@ -1024,6 +1259,8 @@ class SuperInstallerApp:
             self.cancel_requested = True
             self.log_to_terminal("\n[DURDURMA TALEBİ] Kullanıcı iptal butonuna bastı. İşlem durduruluyor...")
             self.status_text_lbl.configure(text="İptal ediliyor... Lütfen bekleyin.")
+            if getattr(self, "overlay", None) is not None:
+                self.overlay.set_cancelling()
             if self.current_process and self.current_process.poll() is None:
                 try:
                     self.current_process.terminate()
@@ -1064,6 +1301,7 @@ class SuperInstallerApp:
             pkg_id = p["package_id"]
 
             self.root.after(0, lambda t=f"Kuruluyor ({idx}/{total}): {pname}...": self.status_text_lbl.configure(text=t))
+            self.root.after(0, lambda i=idx, n=pname: self.overlay.set_current(i, total, n))
             self.set_program_status(pid, "🔄 Kuruluyor...", THEME["accent_blue"])
             self.log_to_terminal(f"\n▶ [{idx}/{total}] {pname} ({ptype.upper()}: {pkg_id}) kuruluyor...")
 
@@ -1268,7 +1506,9 @@ class SuperInstallerApp:
                 failed_count += 1
 
             # İlerleme Çubuğunu Güncelle
-            self.root.after(0, lambda v=idx: self.progress_bar.configure(value=v))
+            self.root.after(0, lambda v=idx, s=success_count, k=skipped_count, f=failed_count: (
+                self.progress_bar.configure(value=v),
+                self.overlay.update_progress(v, total, s, k, f)))
 
         # Kurulum Sonu Raporu
         self.is_installing = False
@@ -1284,7 +1524,7 @@ class SuperInstallerApp:
                 self.log_to_terminal("⏹️ KURULUM İŞLEMİ İPTAL EDİLDİ!")
                 self.log_to_terminal(f"Tamamlanan: {success_count} | Atlanan/Kurulu: {skipped_count} | Hata: {failed_count}")
                 self.log_to_terminal("=" * 60)
-                messagebox.showwarning("Kurulum Durduruldu", "Kurulum işlemi kullanıcı isteğiyle durduruldu.")
+                self.overlay.finish(success_count, skipped_count, failed_count, total, cancelled=True)
             else:
                 self.status_text_lbl.configure(text=f"Kurulum bitti! Başarılı: {success_count} | Zaten Kurulu: {skipped_count} | Hatalı: {failed_count}")
                 self.log_to_terminal("\n" + "=" * 60)
@@ -1292,14 +1532,7 @@ class SuperInstallerApp:
                 self.log_to_terminal(f"Toplam: {total} | Başarılı: {success_count} | Atlanan/Kurulu: {skipped_count} | Hata: {failed_count}")
                 self.log_to_terminal("=" * 60)
 
-                msg = (
-                    f"Kurulum işlemi tamamlandı!\n\n"
-                    f"✅ Başarıyla Kurulan: {success_count}\n"
-                    f"⭐ Zaten Kurulu Olan: {skipped_count}\n"
-                    f"❌ Hata Oluşan: {failed_count}\n\n"
-                    f"Detaylı logları canlı konsoldan inceleyebilirsiniz."
-                )
-                messagebox.showinfo("Kurulum Tamamlandı", msg)
+                self.overlay.finish(success_count, skipped_count, failed_count, total, cancelled=False)
 
         self.root.after(0, _finish)
 

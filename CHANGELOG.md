@@ -1,5 +1,13 @@
 # Değişiklik Günlüğü
 
+## [3.1.0]
+- Her mühendislik dalına özel niş araçlar: 6 yeni kategori ve 53 yeni program (toplam 275). Winget kimlikleri ve pip paket adları eklenmeden önce tek tek doğrulandı.
+- 6 yeni hazır profil (Makine, Elektrik-Elektronik, İnşaat & Harita, Kimya & Biyo, Uzay & Endüstri, Matematik & Bilim).
+- Yeni yükleme ekranı: dönen simge, yumuşak dolan ilerleme çubuğu, canlı sayaçlar, bitiş özeti.
+- Özel yuvarlak onay kutuları.
+- Sol panel kaydırılabilir oldu.
+- Köşe çizimi daha yuvarlak ve net.
+
 ## [3.0.0]
 - Proje adı **Atölye** oldu.
 - Apple tarzı açık tema, sade başlık, arama kutusunda yer tutucu metin.
