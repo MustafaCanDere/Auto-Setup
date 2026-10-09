@@ -4,6 +4,8 @@ Mühendisler ve geliştiriciler için **tik tik** seçmeli, Windows'ta tek tıkl
 
 ![Python](https://img.shields.io/badge/Python-3.8%2B-blue) ![Platform](https://img.shields.io/badge/Platform-Windows-lightgrey) ![License](https://img.shields.io/badge/License-MIT-green)
 
+![Uygulama arayüzü](docs/screenshot.png)
+
 ## ✨ Özellikler
 
 - **Harici bağımlılık yok:** Sadece standart Python (Tkinter) kullanır.
@@ -37,6 +39,10 @@ Mühendisler ve geliştiriciler için **tik tik** seçmeli, Windows'ta tek tıkl
 | `muhendis_kurulum.py` | Arayüz ve kurulum motoru |
 | `programlar_db.py` | Program, kategori ve profil veritabanı |
 | `baslat.bat` / `KURULUM_BASLAT.bat` | Başlatıcılar |
+
+## 🌐 Tanıtım Sayfası
+
+`docs/index.html` tek dosyalık bir tanıtım sayfasıdır. GitHub'da **Settings → Pages → Branch: `main` / Folder: `/docs`** seçersen `https://<kullanici-adin>.github.io/muhendis-kurulum/` adresinde yayınlanır.
 
 ## ➕ Program Ekleme
 

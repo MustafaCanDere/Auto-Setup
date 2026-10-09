@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mühendis Süper Kurulum Merkezi</title>
+<meta name="description" content="Windows için tik tik seçmeli mühendis kurulum paketi: 222+ araç, hazır profiller, tek tıkla kurulum.">
+<style>
+:root {
+  --bg: #0b0d14;
+  --bg-2: #10131e;
+  --panel: #161b2c;
+  --card: #1e243b;
+  --border: #2c3454;
+  --text: #f8fafc;
+  --muted: #94a3b8;
+  --blue: #38bdf8;
+  --purple: #c084fc;
+  --green: #22c55e;
+  --amber: #f59e0b;
+}
+:root[data-theme="light"] {
+  --bg: #f6f8fc;
+  --bg-2: #edf1f9;
+  --panel: #ffffff;
+  --card: #ffffff;
+  --border: #d5dcec;
+  --text: #0f172a;
+  --muted: #55627a;
+  --blue: #0369a1;
+  --purple: #7e22ce;
+  --green: #15803d;
+  --amber: #b45309;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #f6f8fc; --bg-2: #edf1f9; --panel: #ffffff; --card: #ffffff; --border: #d5dcec;
+    --text: #0f172a; --muted: #55627a; --blue: #0369a1; --purple: #7e22ce; --green: #15803d; --amber: #b45309;
+  }
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+  line-height: 1.55;
+}
+a { color: inherit; }
+.wrap { max-width: 1080px; margin: 0 auto; padding: 0 16px; }
+
+/* Üst menü */
+nav { border-bottom: 1px solid var(--border); background: var(--bg); position: sticky; top: 0; z-index: 5; }
+nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 56px; }
+.brand { font-weight: 700; text-decoration: none; display: flex; align-items: center; gap: 8px; }
+.brand span { color: var(--blue); }
+nav .links { display: flex; gap: 18px; font-size: 14px; color: var(--muted); }
+nav .links a { text-decoration: none; }
+nav .links a:hover { color: var(--text); }
+@media (max-width: 640px) { nav .links { display: none; } }
+
+/* Hero */
+.hero { padding: 72px 0 40px; text-align: center; background: radial-gradient(900px 300px at 50% -50px, rgba(56,189,248,.18), transparent); }
+.eyebrow { display: inline-block; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--blue); border: 1px solid var(--border); border-radius: 999px; padding: 4px 12px; background: var(--panel); }
+h1 { font-size: clamp(32px, 6vw, 54px); line-height: 1.1; margin: 18px 0 14px; letter-spacing: -.02em; }
+h1 em { font-style: normal; color: var(--blue); }
+.lead { color: var(--muted); font-size: 18px; max-width: 640px; margin: 0 auto 28px; }
+.cta { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 22px; border-radius: 10px; font-weight: 600; text-decoration: none; border: 1px solid var(--border); background: var(--panel); transition: transform .15s, border-color .15s; }
+.btn:hover { transform: translateY(-1px); border-color: var(--blue); }
+.btn.primary { background: var(--green); border-color: var(--green); color: #fff; }
+.shot { margin: 44px auto 0; max-width: 940px; border: 1px solid var(--border); border-radius: 14px; overflow: hidden; background: var(--panel); box-shadow: 0 30px 80px -30px rgba(0,0,0,.6); }
+.shot img { display: block; width: 100%; height: auto; }
+
+/* İstatistikler */
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 48px 0; }
+.stat { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 18px; text-align: center; }
+.stat b { display: block; font-size: 34px; color: var(--blue); line-height: 1.1; }
+.stat span { color: var(--muted); font-size: 14px; }
+@media (max-width: 640px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+
+section { padding: 40px 0; }
+h2 { font-size: 28px; margin: 0 0 6px; letter-spacing: -.01em; }
+.sub { color: var(--muted); margin: 0 0 24px; }
+
+/* Kategoriler */
+.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+@media (max-width: 860px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 560px) { .grid { grid-template-columns: 1fr; } }
+.card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 16px; }
+.card h3 { margin: 0 0 4px; font-size: 16px; display: flex; justify-content: space-between; gap: 8px; }
+.card h3 small { color: var(--blue); font-weight: 600; }
+.card p { margin: 0; color: var(--muted); font-size: 14px; }
+
+/* Profiller */
+.chips { display: flex; flex-wrap: wrap; gap: 10px; }
+.chip { background: var(--panel); border: 1px solid var(--border); border-radius: 999px; padding: 8px 16px; font-size: 14px; }
+
+/* Adımlar */
+.steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; counter-reset: s; }
+@media (max-width: 760px) { .steps { grid-template-columns: 1fr; } }
+.step { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 20px; }
+.step::before { counter-increment: s; content: counter(s); display: grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--blue); color: #04121c; font-weight: 700; margin-bottom: 10px; }
+.step h3 { margin: 0 0 4px; font-size: 16px; }
+.step p { margin: 0; color: var(--muted); font-size: 14px; }
+code { background: var(--card); border: 1px solid var(--border); border-radius: 6px; padding: 1px 6px; font-size: 13px; }
+
+.note { background: var(--panel); border: 1px solid var(--border); border-left: 4px solid var(--amber); border-radius: 10px; padding: 16px 18px; color: var(--muted); font-size: 14px; }
+.note b { color: var(--text); }
+
+footer { border-top: 1px solid var(--border); margin-top: 40px; padding: 28px 0 48px; color: var(--muted); font-size: 14px; text-align: center; }
+a:focus-visible, .btn:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a class="brand" href="#top">⚡ Mühendis <span>Kurulum</span></a>
+    <div class="links">
+      <a href="#kategoriler">Kategoriler</a>
+      <a href="#profiller">Profiller</a>
+      <a href="#baslangic">Başlangıç</a>
+      <a href="#" class="repo-link">GitHub</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <div class="wrap">
+    <span class="eyebrow">Windows • Python • Ücretsiz • MIT</span>
+    <h1>Tik tik seç, <em>tek tıkla kur.</em></h1>
+    <p class="lead">Yapay zekadan donanıma, DevOps'tan tasarıma kadar 222+ mühendislik aracını tek pencereden seç ve otomatik kur.</p>
+    <div class="cta">
+      <a class="btn primary" href="#" id="dl">⬇ ZIP olarak indir</a>
+      <a class="btn repo-link" href="#">★ GitHub'da gör</a>
+    </div>
+    <div class="shot">
+      <img src="screenshot.png" alt="Mühendis Süper Kurulum Merkezi arayüzü: sol tarafta kategoriler ve hazır profiller, sağda seçilebilir program kartları">
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <div class="stats">
+    <div class="stat"><b>222</b><span>Araç ve paket</span></div>
+    <div class="stat"><b>9</b><span>Kategori</span></div>
+    <div class="stat"><b>69</b><span>GitHub projesi</span></div>
+    <div class="stat"><b>0</b><span>Harici bağımlılık</span></div>
+  </div>
+
+  <section id="kategoriler">
+    <h2>Kategoriler</h2>
+    <p class="sub">Her aracın yanında kendi onay kutusu var. Sadece işaretlediklerin kurulur.</p>
+    <div class="grid">
+      <div class="card"><h3>🛡️ Siber Güvenlik & Ağ <small>45</small></h3><p>Nmap, Wireshark, Burp Suite, OWASP ZAP ve daha fazlası.</p></div>
+      <div class="card"><h3>🛠️ Diller & Git <small>45</small></h3><p>Git, Node.js, Rust, Go, JDK, CMake, uv.</p></div>
+      <div class="card"><h3>🤖 Yapay Zeka & LLM <small>37</small></h3><p>Ollama, LM Studio, ComfyUI, Open WebUI, CUDA.</p></div>
+      <div class="card"><h3>🚀 Verimlilik & Sistem <small>27</small></h3><p>PowerToys, Windows Terminal, Everything, Obsidian.</p></div>
+      <div class="card"><h3>☁️ DevOps & Bulut <small>22</small></h3><p>Docker, kubectl, Terraform, AWS CLI, Postman.</p></div>
+      <div class="card"><h3>🐍 Python AI / ML <small>16</small></h3><p>PyTorch, Transformers, scikit-learn, LangChain.</p></div>
+      <div class="card"><h3>⚡ Donanım & Gömülü <small>12</small></h3><p>KiCad, Arduino IDE, Wireshark, PuTTY, Serial Studio.</p></div>
+      <div class="card"><h3>🎨 Tasarım & Medya <small>10</small></h3><p>Blender, GIMP, Inkscape, Krita, OBS Studio.</p></div>
+      <div class="card"><h3>💻 Kodlama & IDE <small>8</small></h3><p>VS Code, Cursor, PyCharm, IntelliJ, Neovim.</p></div>
+    </div>
+  </section>
+
+  <section id="profiller">
+    <h2>Hazır profiller</h2>
+    <p class="sub">Tek tıkla bir uzmanlık alanının tüm araçlarını seç.</p>
+    <div class="chips">
+      <span class="chip">🌟 Tümünü Seç</span>
+      <span class="chip">🤖 Yapay Zeka</span>
+      <span class="chip">🛡️ Siber Güvenlik</span>
+      <span class="chip">🎨 Tasarım & 3D</span>
+      <span class="chip">⚡ Donanım & IoT</span>
+      <span class="chip">💻 Yazılım & Full-Stack</span>
+      <span class="chip">☁️ DevOps & Bulut</span>
+      <span class="chip">🧹 Temizle</span>
+    </div>
+  </section>
+
+  <section id="baslangic">
+    <h2>3 adımda başla</h2>
+    <p class="sub">Kurulum yok, sadece bir <code>.bat</code> dosyası.</p>
+    <div class="steps">
+      <div class="step"><h3>İndir</h3><p>Repoyu ZIP olarak indir ve klasöre çıkar.</p></div>
+      <div class="step"><h3>Başlat</h3><p><code>KURULUM_BASLAT.bat</code> dosyasına çift tıkla. Python yoksa Winget ile kurmayı önerir.</p></div>
+      <div class="step"><h3>Seç ve kur</h3><p>Programları işaretle, <b>Seçilenleri Kur</b> butonuna bas. Canlı konsoldan izle.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="note">
+      <b>Sorumluluk reddi.</b> Listede siber güvenlik ve pentest araçları da var. Bunları yalnızca kendi sistemlerinde veya yazılı izin aldığın ortamlarda kullan. Bu proje programları dağıtmaz, resmî kaynaklardan (Winget, pip, GitHub) kurar.
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">MIT Lisansı • Windows 10/11 • Winget gerekir</div>
+</footer>
+
+<script>
+// GitHub Pages adresinden (kullanici.github.io/repo) depo bağlantısını otomatik üret
+(function () {
+  try {
+    var host = location.hostname;
+    if (host.endsWith(".github.io")) {
+      var user = host.split(".")[0];
+      var repo = location.pathname.split("/").filter(Boolean)[0] || "muhendis-kurulum";
+      var url = "https://github.com/" + user + "/" + repo;
+      document.querySelectorAll(".repo-link").forEach(function (a) { a.href = url; });
+      document.getElementById("dl").href = url + "/archive/refs/heads/main.zip";
+    }
+  } catch (e) {}
+})();
+</script>
+</body>
+</html>
