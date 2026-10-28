@@ -123,7 +123,7 @@ a:focus-visible, .btn:focus-visible { outline: 2px solid var(--blue); outline-of
     <h1>Atölye. <em>Seç, kur, çalış.</em></h1>
     <p class="lead">Yapay zekadan makineye, elektrikten inşaata, kimyadan uzaya her mühendislik dalının en niş araçları tek pencerede.</p>
     <div class="cta">
-      <a class="btn primary" href="#" id="dl">⬇ ZIP olarak indir</a>
+      <a class="btn primary" href="#" id="dl">⬇ Atolye.exe indir</a>
       <a class="btn repo-link" href="#">★ GitHub'da gör</a>
     </div>
     <div class="shot">
@@ -194,10 +194,10 @@ a:focus-visible, .btn:focus-visible { outline: 2px solid var(--blue); outline-of
 
   <section id="baslangic">
     <h2>3 adımda başla</h2>
-    <p class="sub">Kurulum yok, sadece bir <code>.bat</code> dosyası.</p>
+    <p class="sub">Kurulum yok, sadece bir <code>.exe</code> dosyası.</p>
     <div class="steps">
-      <div class="step"><h3>İndir</h3><p>Repoyu ZIP olarak indir ve klasöre çıkar.</p></div>
-      <div class="step"><h3>Başlat</h3><p><code>ATOLYE_BASLAT.bat</code> dosyasına çift tıkla. Python yoksa Winget ile kurmayı önerir.</p></div>
+      <div class="step"><h3>İndir</h3><p><a href="https://github.com/MustafaCanDere/atolye/releases/latest/download/Atolye.exe"><code>Atolye.exe</code></a> dosyasını indir.</p></div>
+      <div class="step"><h3>Başlat</h3><p><code>Atolye.exe</code> dosyasına çift tıkla. Python gerekmez.</p></div>
       <div class="step"><h3>Seç ve kur</h3><p>Programları işaretle, <b>Seçilenleri Kur</b> butonuna bas. SolidWorks, AutoCAD, MATLAB gibi ticari yazılımlarda kart, resmî sayfayı açar.</p></div>
     </div>
   </section>
@@ -224,7 +224,7 @@ a:focus-visible, .btn:focus-visible { outline: 2px solid var(--blue); outline-of
       var repo = location.pathname.split("/").filter(Boolean)[0] || "atolye";
       var url = "https://github.com/" + user + "/" + repo;
       document.querySelectorAll(".repo-link").forEach(function (a) { a.href = url; });
-      document.getElementById("dl").href = url + "/archive/refs/heads/main.zip";
+      document.getElementById("dl").href = url + "/releases/latest/download/Atolye.exe";
     }
   } catch (e) {}
 })();

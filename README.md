@@ -32,19 +32,14 @@ Yeni bir bilgisayar kurarken onlarca siteye girip tek tek program indirmek zaman
 
 ## Hızlı başlangıç
 
-1. Repoyu indir (`Code → Download ZIP`) veya klonla:
-   ```bash
-   git clone https://github.com/MustafaCanDere/atolye.git
-   ```
-2. `ATOLYE_BASLAT.bat` dosyasına çift tıkla. Python yoksa Winget ile kurmayı önerir.
+1. [**Atolye.exe**](https://github.com/MustafaCanDere/atolye/releases/latest/download/Atolye.exe) dosyasını indir.
+2. Çift tıkla. Python kurmana gerek yok, her şey exe'nin içinde.
 3. Programları işaretle veya soldan bir profil seç.
 4. **Seçilenleri Kur** butonuna bas.
 
-Terminalden çalıştırmak istersen:
+Seçimlerin exe'nin yanındaki `secilenler.json` dosyasında saklanır. pip paketlerini kurmak için bilgisayarda Python olmalı, winget ve git kurulumları için gerekmez.
 
-```bash
-python atolye.py
-```
+Kaynak koddan çalıştırmak istersen repoyu klonla ve `python atolye.py` çalıştır (ya da `ATOLYE_BASLAT.bat`, Python yoksa Winget ile kurmayı önerir).
 
 ## Gereksinimler
 
@@ -58,7 +53,8 @@ python atolye.py
 |---|---|
 | `atolye.py` | Arayüz ve kurulum motoru |
 | `programlar_db.py` | Program, kategori ve profil veritabanı |
-| `ATOLYE_BASLAT.bat`, `baslat.bat` | Başlatıcılar |
+| `ATOLYE_BASLAT.bat`, `baslat.bat` | Kaynak koddan çalıştırmak için başlatıcılar |
+| `.github/workflows/exe.yml` | `Atolye.exe` derlemesi; `main`'e her push'ta Releases'e yükler |
 | `tests/` | Veritabanı tutarlılık testleri |
 | `docs/` | Tanıtım sayfası (GitHub Pages) |
 

@@ -3,6 +3,7 @@
 ## [3.3.0]
 - **ArtCraft uygulamaları** (getartcraft.com/apps): ArtCraft Launcher kurulabilir olarak eklendi (Windows x64 portatif zip, v0.1.0) ve Tasarım profiline girdi. Launcher 13 uygulamanın hepsini kurar ve günceller.
 - 13 uygulama için kart: PhotoCraft, VectorCraft, FilmCraft, LightCraft, PdfCraft, EffectCraft, DesignCraft, FigCraft, WordCraft, SoundCraft, DeckCraft, CADCraft, GridCraft. Uygulamalar erken alfada ve sık sürüm çıkardığı için kartlar GitHub'daki en güncel sürüm sayfasını açar.
+- **Atolye.exe:** artık `.bat` yerine tek bir exe ile açılıyor, Python gerekmez. GitHub Actions her `main` push'unda exe'yi derler, açılıp açılmadığını dener ve Releases'e yükler. Seçimler exe'nin yanındaki `secilenler.json` dosyasına kaydedilir.
 - Toplam 428 giriş (368 kurulabilir + 60 sayfa kartı).
 
 ## [3.2.0]

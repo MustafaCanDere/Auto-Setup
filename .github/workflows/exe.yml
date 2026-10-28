@@ -1,0 +1,47 @@
+name: Atolye.exe
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: PyInstaller kur
+        run: python -m pip install pyinstaller
+      - name: Atolye.exe derle
+        run: python -m PyInstaller --onefile --windowed --name Atolye atolye.py
+      - name: Exe açılıyor mu (duman testi)
+        shell: pwsh
+        run: |
+          $p = Start-Process -FilePath dist\Atolye.exe -PassThru
+          Start-Sleep -Seconds 8
+          if ($p.HasExited) { Write-Error "Atolye.exe hemen kapandi (kod $($p.ExitCode))"; exit 1 }
+          Stop-Process -Id $p.Id -Force
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Atolye-exe
+          path: dist/Atolye.exe
+      - name: Sürüm yayınla (main)
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ver=$(grep -m1 -oE '^## \[[0-9.]+\]' CHANGELOG.md | grep -oE '[0-9.]+')
+          tag="v$ver"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release upload "$tag" dist/Atolye.exe --clobber
+          else
+            gh release create "$tag" dist/Atolye.exe --title "Atölye $ver" --notes "Atolye.exe: indir, çift tıkla. Python gerekmez."
+          fi
