@@ -21,8 +21,9 @@
 Yeni bir bilgisayar kurarken onlarca siteye girip tek tek program indirmek zaman kaybı. Atölye, mühendislik ve yazılım araçlarını tek pencerede toplar: işaretle, **Seçilenleri Kur**'a bas, gerisini o halletsin.
 
 - **Harici bağımlılık yok.** Sadece standart Python (Tkinter).
-- **367 kurulabilir araç, 16 kategori:** iş yeri araçları, yapay zeka, siber güvenlik, yazılım, DevOps, donanım ve **her mühendislik dalına özel araçlar** (makine, elektrik-elektronik, inşaat/harita, kimya/biyo, uzay/endüstri, matematik/bilim).
+- **368 kurulabilir araç, 16 kategori:** iş yeri araçları, yapay zeka, siber güvenlik, yazılım, DevOps, donanım ve **her mühendislik dalına özel araçlar** (makine, elektrik-elektronik, inşaat/harita, kimya/biyo, uzay/endüstri, matematik/bilim).
 - **47 ticari yazılım için resmî sayfa:** SolidWorks, AutoCAD, Revit, MATLAB, ANSYS, TIA Portal, Altium ve benzerleri lisans gerektirir ve winget'te yoktur. Kartına tıklayınca satıcının resmî sayfası açılır, Atölye bunlar için hiçbir şey indirmez veya kurmaz. Ücretsiz görüntüleyiciler (eDrawings, DWG TrueView, Navisworks Freedom, JT2Go) ise normal kurulur.
+- **ArtCraft uygulamaları:** [getartcraft.com/apps](https://getartcraft.com/apps) sayfasındaki 13 açık kaynak, Rust ile yazılmış uygulama (PhotoCraft, VectorCraft, FilmCraft, LightCraft, PdfCraft, EffectCraft, DesignCraft, FigCraft, WordCraft, SoundCraft, DeckCraft, CADCraft, GridCraft). **ArtCraft Launcher** kurulur ve hepsini kurup güncel tutar. Her uygulamanın kartı GitHub'daki en güncel sürüm sayfasını açar.
 - **16 hazır profil:** İş Yeri Paketi, Yapay Zeka, Siber Güvenlik, Yazılım, DevOps, Donanım, Tasarım ve her mühendislik dalı için bir profil. Tek tıkla bir alanın tüm araçlarını seç.
 - **Canlı arama** ve kategori filtresi.
 - **Üç kurulum yolu:** Winget (sistem programları), pip (Python paketleri), git (açık kaynak projeler, `requirements.txt` otomatik kurulur).
@@ -31,19 +32,14 @@ Yeni bir bilgisayar kurarken onlarca siteye girip tek tek program indirmek zaman
 
 ## Hızlı başlangıç
 
-1. Repoyu indir (`Code → Download ZIP`) veya klonla:
-   ```bash
-   git clone https://github.com/MustafaCanDere/atolye.git
-   ```
-2. `ATOLYE_BASLAT.bat` dosyasına çift tıkla. Python yoksa Winget ile kurmayı önerir.
+1. [**Atolye.exe**](https://github.com/MustafaCanDere/atolye/releases/latest/download/Atolye.exe) dosyasını indir.
+2. Çift tıkla. Python kurmana gerek yok, her şey exe'nin içinde.
 3. Programları işaretle veya soldan bir profil seç.
 4. **Seçilenleri Kur** butonuna bas.
 
-Terminalden çalıştırmak istersen:
+Seçimlerin exe'nin yanındaki `secilenler.json` dosyasında saklanır. pip paketlerini kurmak için bilgisayarda Python olmalı, winget ve git kurulumları için gerekmez.
 
-```bash
-python atolye.py
-```
+Kaynak koddan çalıştırmak istersen repoyu klonla ve `python atolye.py` çalıştır (ya da `ATOLYE_BASLAT.bat`, Python yoksa Winget ile kurmayı önerir).
 
 ## Gereksinimler
 
@@ -57,7 +53,8 @@ python atolye.py
 |---|---|
 | `atolye.py` | Arayüz ve kurulum motoru |
 | `programlar_db.py` | Program, kategori ve profil veritabanı |
-| `ATOLYE_BASLAT.bat`, `baslat.bat` | Başlatıcılar |
+| `ATOLYE_BASLAT.bat`, `baslat.bat` | Kaynak koddan çalıştırmak için başlatıcılar |
+| `.github/workflows/exe.yml` | `Atolye.exe` derlemesi; `main`'e her push'ta Releases'e yükler |
 | `tests/` | Veritabanı tutarlılık testleri |
 | `docs/` | Tanıtım sayfası (GitHub Pages) |
 

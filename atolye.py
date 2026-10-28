@@ -27,16 +27,20 @@ try:
 except Exception:
     pass
 
+# Atolye.exe olarak paketlendiyse (PyInstaller) dosyalar exe'nin yanında tutulur
+IS_FROZEN = getattr(sys, "frozen", False)
+APP_DIR = os.path.dirname(sys.executable if IS_FROZEN else os.path.abspath(__file__))
+
 # Program veritabanını içe aktar
 try:
     from programlar_db import CATEGORIES, PROGRAMS, PRESETS
 except ImportError:
     # Aynı dizinde doğrudan çalıştığında
-    sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+    sys.path.append(APP_DIR)
     from programlar_db import CATEGORIES, PROGRAMS, PRESETS
 
 # Konfigürasyon dosya yolu
-CONFIG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "secilenler.json")
+CONFIG_FILE = os.path.join(APP_DIR, "secilenler.json")
 
 # Renk Paleti (Apple tarzı açık tema)
 THEME = {
@@ -549,7 +553,8 @@ class SuperInstallerApp:
 
     def detect_python_cmd(self):
         """Python çalıştırma komutunu belirler"""
-        if sys.executable and os.path.exists(sys.executable):
+        # Exe içinde sys.executable Atolye.exe'dir: pip için sistemdeki Python aranır
+        if not IS_FROZEN and sys.executable and os.path.exists(sys.executable):
             exe = sys.executable
             if exe.lower().endswith("pythonw.exe"):
                 alt = exe[:-5] + ".exe"
