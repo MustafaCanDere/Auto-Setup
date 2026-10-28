@@ -3038,6 +3038,62 @@ PROGRAMS += [
 ]
 
 
+# -------------------------------------------------------------
+# 🎨 ARTCRAFT: AÇIK KAYNAK, RUST İLE YAZILMIŞ YARATICI UYGULAMALAR (getartcraft.com/apps)
+# ArtCraft Launcher kurulur ve 13 uygulamanın hepsini kurup güncel tutar.
+# Uygulamalar erken alfa aşamasında ve sık sürüm çıkarıyor: kartları her zaman
+# en güncel sürümü gösteren GitHub "latest release" sayfasını açar.
+# -------------------------------------------------------------
+_AC = "https://github.com/storytold/{}/releases/latest"
+
+PROGRAMS += [
+    _p("artcraft_launcher", "ArtCraft Launcher", "design_media", "direct_zip",
+       "https://github.com/storytold/craft-launcher/releases/download/v0.1.0/artcraft-launcher-0.1.0-windows-x64-portable.zip",
+       "ArtCraft'ın 13 açık kaynak uygulamasını (PhotoCraft, FilmCraft, WordCraft...) tek yerden kurup güncel tutan başlatıcı",
+       ["artcraft", "launcher", "rust", "acik kaynak", "adobe alternatifi"]),
+
+    _w("artcraft_photocraft", "PhotoCraft", "design_media", _AC.format("photocraft"),
+       "Photoshop alternatifi açık kaynak raster görüntü düzenleyici, PSD desteğiyle (ArtCraft, erken alfa)",
+       ["artcraft", "photoshop", "fotograf", "raster", "psd", "rust"]),
+    _w("artcraft_vectorcraft", "VectorCraft", "design_media", _AC.format("vectorcraft"),
+       "Illustrator alternatifi açık kaynak vektör çizim aracı (ArtCraft)",
+       ["artcraft", "illustrator", "vektor", "svg", "rust"]),
+    _w("artcraft_filmcraft", "FilmCraft", "design_media", _AC.format("filmcraft"),
+       "Premiere Pro alternatifi açık kaynak doğrusal olmayan video düzenleyici: kurgu, renk ve ses (ArtCraft)",
+       ["artcraft", "premiere", "video", "kurgu", "rust"]),
+    _w("artcraft_lightcraft", "LightCraft", "design_media", _AC.format("lightcraft"),
+       "Lightroom alternatifi fotoğraf kütüphanesi ve RAW geliştirici, tahribatsız düzenleme (ArtCraft)",
+       ["artcraft", "lightroom", "raw", "fotograf", "rust"]),
+    _w("artcraft_pdfcraft", "PdfCraft", "office", _AC.format("pdfcraft"),
+       "Acrobat Pro alternatifi açık kaynak PDF okuyucu ve düzenleyici (ArtCraft)",
+       ["artcraft", "acrobat", "pdf", "duzenleyici", "rust"]),
+    _w("artcraft_effectcraft", "EffectCraft", "design_media", _AC.format("effectcraft"),
+       "After Effects alternatifi hareketli grafik, VFX ve kompozisyon aracı (ArtCraft)",
+       ["artcraft", "after effects", "motion graphics", "vfx", "rust"]),
+    _w("artcraft_designcraft", "DesignCraft", "design_media", _AC.format("designcraft"),
+       "InDesign alternatifi sayfa düzeni ve yayın tasarım editörü (ArtCraft)",
+       ["artcraft", "indesign", "sayfa duzeni", "yayin", "rust"]),
+    _w("artcraft_figcraft", "FigCraft", "design_media", _AC.format("figcraft"),
+       "Figma alternatifi arayüz tasarımı ve prototipleme aracı (ArtCraft)",
+       ["artcraft", "figma", "ui", "ux", "prototip", "rust"]),
+    _w("artcraft_wordcraft", "WordCraft", "office", _AC.format("wordcraft"),
+       "Word alternatifi açık kaynak kelime işlemci (ArtCraft)",
+       ["artcraft", "word", "kelime islemci", "belge", "rust"]),
+    _w("artcraft_soundcraft", "SoundCraft", "design_media", _AC.format("soundcraft"),
+       "Pro Tools alternatifi dijital ses iş istasyonu (DAW) (ArtCraft)",
+       ["artcraft", "pro tools", "ses", "daw", "muzik", "rust"]),
+    _w("artcraft_deckcraft", "DeckCraft", "office", _AC.format("deckcraft"),
+       "PowerPoint alternatifi sunum uygulaması (ArtCraft)",
+       ["artcraft", "powerpoint", "sunum", "slayt", "rust"]),
+    _w("artcraft_cadcraft", "CADCraft", "mech", _AC.format("cadcraft"),
+       "AutoCAD tarzı açık kaynak 2D teknik çizim uygulaması (ArtCraft)",
+       ["artcraft", "autocad", "cad", "2d", "teknik resim", "rust"]),
+    _w("artcraft_gridcraft", "GridCraft", "office", _AC.format("gridcraft"),
+       "Excel alternatifi açık kaynak hesap tablosu uygulaması (ArtCraft)",
+       ["artcraft", "excel", "hesap tablosu", "tablo", "rust"]),
+]
+
+
 # Hazır Profiller (Hızlı Seçim Şablonları)
 PRESETS = {
     "all": {
@@ -3082,7 +3138,7 @@ PRESETS = {
         "ids": [
             "blender", "gimp", "inkscape", "krita", "audacity", "handbrake",
             "obs_studio", "darktable", "shotcut",
-            "freecad", "sharex", "upscayl", "drawio"
+            "freecad", "sharex", "upscayl", "drawio", "artcraft_launcher"
         ],
     },
     "hardware_embedded": {
