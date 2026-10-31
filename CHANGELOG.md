@@ -1,5 +1,11 @@
 # Değişiklik Günlüğü
 
+## [3.4.0]
+- **Canlı indirme ilerlemesi:** kurulum ekranı artık o an inen programın ne kadarının indiğini gösteriyor: yüzde, inen / toplam boyut, hız ve kalan süre (ör. `%42 · 120.3 MB / 286.0 MB · 8.3 MB/s · ~20 sn kaldı`). Ana çubuk da indirme boyunca akıcı ilerliyor.
+- winget, pip (24.1+ ile `--progress-bar raw`, eskilerde dosya boyutu), git (`--progress`) ve doğrudan zip indirmelerinin hepsinde çalışır. Alttaki durum satırı ve çubuk da aynı bilgiyi gösterir.
+- Konsol artık her ilerleme çubuğu karesiyle dolmuyor; yalnızca %25'lik adımlar yazılıyor.
+- Testler: `tests/test_download_progress.py`.
+
 ## [3.3.0]
 - **ArtCraft uygulamaları** (getartcraft.com/apps): ArtCraft Launcher kurulabilir olarak eklendi (Windows x64 portatif zip, v0.1.0) ve Tasarım profiline girdi. Launcher 13 uygulamanın hepsini kurar ve günceller.
 - 13 uygulama için kart: PhotoCraft, VectorCraft, FilmCraft, LightCraft, PdfCraft, EffectCraft, DesignCraft, FigCraft, WordCraft, SoundCraft, DeckCraft, CADCraft, GridCraft. Uygulamalar erken alfada ve sık sürüm çıkardığı için kartlar GitHub'daki en güncel sürüm sayfasını açar.
