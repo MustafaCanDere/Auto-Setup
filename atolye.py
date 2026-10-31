@@ -8,6 +8,7 @@ Harici paket bağımlılığı gerektirmez, doğrudan çalışır.
 import sys
 import os
 import json
+import re
 import time
 import shutil
 import struct
@@ -67,6 +68,182 @@ THEME = {
     "terminal_header": "#2c2c2e",
     "terminal_fg": "#30d158",
 }
+
+# -------------------------------------------------------------
+# İNDİRME İLERLEMESİ: winget / pip / git çıktısından ilerleme okuma
+# -------------------------------------------------------------
+_UNITS = {
+    "B": 1, "KB": 1024, "MB": 1024 ** 2, "GB": 1024 ** 3,
+    "KIB": 1024, "MIB": 1024 ** 2, "GIB": 1024 ** 3,
+}
+_NUM = r"(\d+(?:[.,]\d+)?)"
+_UNIT = r"(B|KB|MB|GB|KiB|MiB|GiB)"
+_RE_PIP_RAW = re.compile(r"^Progress (\d+) of (\d+)\s*$")
+_RE_PIP_START = re.compile(r"Downloading\s+(\S+)\s+\(" + _NUM + r"\s*" + _UNIT + r"\)", re.I)
+_RE_GIT = re.compile(r"Receiving objects:\s+(\d{1,3})%.*?(?:,\s*" + _NUM + r"\s*" + _UNIT + r")?(?:\s*\||\s*$)", re.I)
+_RE_SIZE_PAIR = re.compile(_NUM + r"\s*" + _UNIT + r"\s*/\s*" + _NUM + r"\s*" + _UNIT, re.I)
+_RE_BARE_PCT = re.compile(r"^\W*(\d{1,3}(?:[.,]\d+)?)\s*%\W*$")
+
+
+def _to_bytes(num, unit):
+    return int(float(num.replace(",", ".")) * _UNITS[unit.upper()])
+
+
+def parse_download_progress(line):
+    """Tek bir çıktı satırından indirme ilerlemesini çıkarır.
+
+    Dönüş: {"done": bayt|None, "total": bayt|None, "pct": 0-100|None, "name": str|None,
+            "start": bool} ya da ilerleme satırı değilse None.
+    """
+    s = line.strip()
+    if not s:
+        return None
+
+    m = _RE_PIP_RAW.match(s)  # pip >= 24.1 --progress-bar raw
+    if m:
+        done, total = int(m.group(1)), int(m.group(2))
+        return {"done": done, "total": total or None,
+                "pct": (done * 100.0 / total) if total else None, "name": None, "start": False}
+
+    m = _RE_PIP_START.search(s)  # "Downloading torch-2.5.whl (2.3 GB)"
+    if m:
+        return {"done": 0, "total": _to_bytes(m.group(2), m.group(3)), "pct": 0.0,
+                "name": m.group(1).rsplit("/", 1)[-1], "start": True}
+
+    m = _RE_GIT.search(s)  # "Receiving objects:  45% (123/456), 12.34 MiB | 2.10 MiB/s"
+    if m:
+        done = _to_bytes(m.group(2), m.group(3)) if m.group(2) else None
+        return {"done": done, "total": None, "pct": float(m.group(1)), "name": None, "start": False}
+
+    m = _RE_SIZE_PAIR.search(s)  # winget: "████▒▒▒  120 MB / 286 MB"
+    if m:
+        done, total = _to_bytes(m.group(1), m.group(2)), _to_bytes(m.group(3), m.group(4))
+        if total > 0 and done <= total:
+            return {"done": done, "total": total, "pct": done * 100.0 / total,
+                    "name": None, "start": False}
+
+    m = _RE_BARE_PCT.match(s)  # winget boyut bilinmiyorsa: "████▒▒▒  45%"
+    if m:
+        pct = float(m.group(1).replace(",", "."))
+        if 0 <= pct <= 100:
+            return {"done": None, "total": None, "pct": pct, "name": None, "start": False}
+    return None
+
+
+def format_size(n):
+    if n is None:
+        return "?"
+    for unit, div in (("GB", 1024 ** 3), ("MB", 1024 ** 2), ("KB", 1024)):
+        if n >= div:
+            return f"{n / div:.1f} {unit}"
+    return f"{int(n)} B"
+
+
+def format_eta(sec):
+    sec = int(sec)
+    if sec < 60:
+        return f"{sec} sn"
+    if sec < 3600:
+        return f"{sec // 60} dk {sec % 60:02d} sn"
+    return f"{sec // 3600} sa {(sec % 3600) // 60:02d} dk"
+
+
+class DownloadMeter:
+    """İndirme ilerlemesini izler; hız ve kalan süreyi hesaplar, ekranı yormamak için yenilemeyi seyreltir."""
+
+    REFRESH = 0.15  # saniye
+
+    def __init__(self, clock=time.monotonic):
+        self._clock = clock
+        self.reset()
+
+    def reset(self):
+        self.done = None
+        self.total = None
+        self.pct = None
+        self.name = None
+        self.speed = None
+        self.active = False
+        self._last_t = None
+        self._last_done = None
+        self._last_emit = 0.0
+        self._milestone = -1
+
+    def feed(self, prog, force=False):
+        """Yeni ilerleme bilgisini işler. Ekran yenilenmeli ise (oran|None, metin) döner, yoksa None."""
+        now = self._clock()
+        # Yuvarlanmış boyut ("15.9 MB") ile tam bayt sayısı ayrı dosya sanılmasın diye %5 tolerans
+        total_changed = bool(prog.get("total") and self.total
+                             and abs(prog["total"] - self.total) > self.total * 0.05)
+        new_file = prog.get("start") or total_changed or (
+            prog.get("done") is not None and self.done is not None and prog["done"] < self.done)
+        if new_file:
+            name = prog.get("name") if (prog.get("start") or total_changed) else self.name
+            self.reset()
+            self.name = name
+        if prog.get("name"):
+            self.name = prog["name"]
+
+        done, total = prog.get("done"), prog.get("total")
+        if done is not None:
+            if self._last_t is not None and self._last_done is not None and now > self._last_t:
+                dt = now - self._last_t
+                if dt >= 0.3:
+                    inst = max(0, done - self._last_done) / dt
+                    self.speed = inst if self.speed is None else self.speed * 0.6 + inst * 0.4
+                    self._last_t, self._last_done = now, done
+            else:
+                self._last_t, self._last_done = now, done
+            self.done = done
+        if total:
+            self.total = total
+        if prog.get("pct") is not None:
+            self.pct = max(0.0, min(100.0, prog["pct"]))
+        elif self.done is not None and self.total:
+            self.pct = min(100.0, self.done * 100.0 / self.total)
+        self.active = True
+
+        if not force and now - self._last_emit < self.REFRESH and (self.pct or 0) < 100:
+            return None
+        self._last_emit = now
+        return self.fraction(), self.text()
+
+    def fraction(self):
+        return None if self.pct is None else self.pct / 100.0
+
+    def milestone(self):
+        """Konsola yazmak için %25'lik eşik geçildiyse eşiği döndürür."""
+        if self.pct is None:
+            return None
+        step = int(self.pct // 25) * 25
+        if step > self._milestone:
+            self._milestone = step
+            return step
+        return None
+
+    def text(self):
+        parts = []
+        name = self.name
+        if name and len(name) > 34:
+            name = name[:31] + "…"
+        head = "⬇ " + (f"{name}  " if name else "İndiriliyor  ")
+        if self.pct is not None:
+            head += f"%{int(self.pct)}"
+        parts.append(head.rstrip())
+        if self.done is not None and self.total:
+            parts.append(f"{format_size(self.done)} / {format_size(self.total)}")
+        elif self.done is not None:
+            parts.append(format_size(self.done))
+        if self.speed:
+            parts.append(f"{format_size(self.speed)}/s")
+            if self.total and self.done is not None and self.speed > 0 and self.done < self.total:
+                parts.append(f"~{format_eta((self.total - self.done) / self.speed)} kaldı")
+        return "  ·  ".join(parts)
+
+    def finish_text(self):
+        size = self.total or self.done
+        return "✔ İndirme bitti" + (f" ({format_size(size)})" if size else "") + " — kuruluyor..."
+
 
 def _round_rect(cv, x1, y1, x2, y2, r, fill="", outline=None, width=1, tag="rr"):
     """Canvas üzerinde tam yuvarlak köşeli dikdörtgen çizer (4 daire + 2 dikdörtgen).
@@ -247,6 +424,8 @@ class InstallOverlay(tk.Frame):
         self._angle = 0
         self._running = False
         self._loop_id = None
+        self._total = 0
+        self._done = 0
         bg = THEME["bg_card"]
 
         self.card = RoundedFrame(self, fill=bg, outline=THEME["border"], radius=26, pad=(44, 36), width=620)
@@ -267,7 +446,9 @@ class InstallOverlay(tk.Frame):
         self.bar.pack()
         self.percent = tk.Label(body, text="%0", font=("Segoe UI", 10, "bold"),
                                 fg=THEME["accent_blue"], bg=bg)
-        self.percent.pack(pady=(8, 16))
+        self.percent.pack(pady=(8, 2))
+        self.dl_lbl = tk.Label(body, text="", font=("Segoe UI", 9), fg=THEME["text_secondary"], bg=bg)
+        self.dl_lbl.pack(pady=(0, 12))
 
         stats = tk.Frame(body, bg=bg)
         stats.pack(fill="x")
@@ -298,7 +479,10 @@ class InstallOverlay(tk.Frame):
     # --- dış arayüz ---------------------------------------------------
     def begin(self, total):
         self._target = self._shown = 0.0
+        self._total = total
+        self._done = 0
         self._running = True
+        self.dl_lbl.configure(text="")
         self.title.configure(text="Kurulum sürüyor")
         self.subtitle.configure(text=f"{total} öğe sırayla kuruluyor...")
         for lbl in self._count_labels.values():
@@ -310,9 +494,18 @@ class InstallOverlay(tk.Frame):
 
     def set_current(self, idx, total, name):
         self.subtitle.configure(text=f"{name}  ·  {idx} / {total}")
+        self.dl_lbl.configure(text="")
+
+    def set_download(self, frac, text):
+        """Mevcut öğenin indirme durumunu gösterir; ana çubuk da indirmeyle birlikte ilerler."""
+        self.dl_lbl.configure(text=text)
+        if frac is not None and self._total:
+            self._target = max(self._target, (self._done + min(frac, 1.0)) / self._total)
 
     def update_progress(self, done, total, ok, skip, fail):
+        self._done = done
         self._target = done / total if total else 0.0
+        self.dl_lbl.configure(text="")
         self._count_labels["ok"].configure(text=str(ok))
         self._count_labels["skip"].configure(text=str(skip))
         self._count_labels["fail"].configure(text=str(fail))
@@ -335,6 +528,7 @@ class InstallOverlay(tk.Frame):
         self._draw_bar()
         self.percent.configure(text=f"%{int(self._shown * 100)}")
         self._draw_done(cancelled, fail)
+        self.dl_lbl.configure(text="")
         if cancelled:
             self.title.configure(text="Kurulum durduruldu")
         elif fail:
@@ -1291,6 +1485,72 @@ class SuperInstallerApp:
                 card.set_status(text, color)
         self.root.after(0, _update)
 
+    def _pip_progress_args(self):
+        """pip 24.1+ ise, ilerlemeyi okunabilir satırlar halinde yazdıran '--progress-bar raw' ekler."""
+        if getattr(self, "_pip_raw_ok", None) is None:
+            self._pip_raw_ok = False
+            try:
+                out = subprocess.run(
+                    [self.python_cmd, "-m", "pip", "--version"], capture_output=True, text=True, timeout=30,
+                    creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0).stdout
+                m = re.search(r"pip (\d+)\.(\d+)", out or "")
+                if m and (int(m.group(1)), int(m.group(2))) >= (24, 1):
+                    self._pip_raw_ok = True
+            except Exception:
+                pass
+        return ["--progress-bar", "raw"] if self._pip_raw_ok else []
+
+    def _show_download(self, frac, text, idx, total, pname):
+        """İndirme durumunu yükleme ekranına ve alt çubuğa yansıtır (arka plan iş parçacığından çağrılabilir)."""
+        def _apply():
+            if getattr(self, "overlay", None) is not None:
+                self.overlay.set_download(frac, text)
+            self.status_text_lbl.configure(text=f"Kuruluyor ({idx}/{total}): {pname}  —  {text}")
+            if frac is not None:
+                self.progress_bar.configure(value=(idx - 1) + min(frac, 1.0))
+        self.root.after(0, _apply)
+
+    def _feed_meter(self, meter, prog, idx, total, pname):
+        upd = meter.feed(prog)
+        if upd is not None:
+            self._show_download(upd[0], upd[1], idx, total, pname)
+        step = meter.milestone()
+        if step is not None:
+            self.log_to_terminal(f"   {meter.text()}")
+
+    def _run_streamed(self, cmd, idx, total, pname):
+        """Komutu çalıştırır, çıktısını konsola akıtır; ilerleme satırlarını ayrıştırıp ekranda gösterir."""
+        meter = DownloadMeter()
+        # text=True evrensel satır sonu kullanır: winget/git'in \r ile güncellediği çubuklar da ayrı satır gelir
+        self.current_process = subprocess.Popen(
+            cmd,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0
+        )
+        for line in iter(self.current_process.stdout.readline, ""):
+            clean_line = line.strip()
+            if not clean_line:
+                continue
+            prog = parse_download_progress(clean_line)
+            if prog is not None:
+                if prog.get("start"):
+                    self.log_to_terminal(f"   {clean_line}")
+                self._feed_meter(meter, prog, idx, total, pname)
+                continue
+            if meter.active:
+                # İlerleme bitti, kurulum/kurulum sonrası çıktılar başladı
+                self._show_download(None, meter.finish_text(), idx, total, pname)
+                meter.reset()
+            self.log_to_terminal(f"   {clean_line}")
+        self.current_process.stdout.close()
+        return_code = self.current_process.wait()
+        self.current_process = None
+        return return_code
+
     def _run_install_thread(self, target_programs):
         total = len(target_programs)
         success_count = 0
@@ -1329,72 +1589,29 @@ class SuperInstallerApp:
                 os.makedirs(tools_dir, exist_ok=True)
 
                 if ptype == "pip":
-                    cmd = [self.python_cmd, "-m", "pip", "install", "--upgrade", "--no-warn-script-location"] + pkg_id.split()
-                    self.current_process = subprocess.Popen(
-                        cmd,
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.STDOUT,
-                        text=True,
-                        encoding="utf-8",
-                        errors="replace",
-                        creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0
-                    )
-                    for line in iter(self.current_process.stdout.readline, ""):
-                        clean_line = line.strip()
-                        if clean_line:
-                            self.log_to_terminal(f"   {clean_line}")
-                    self.current_process.stdout.close()
-                    return_code = self.current_process.wait()
-                    self.current_process = None
+                    cmd = [self.python_cmd, "-m", "pip", "install", "--upgrade", "--no-warn-script-location"] \
+                        + self._pip_progress_args() + pkg_id.split()
+                    return_code = self._run_streamed(cmd, idx, total, pname)
 
                 elif ptype == "git_repo":
                     target_dir = os.path.join(tools_dir, pid)
                     if os.path.exists(target_dir) and os.path.isdir(os.path.join(target_dir, ".git")):
                         self.log_to_terminal(f"   [GÜNCELLEME] Mevcut repo güncelleniyor: {target_dir}")
-                        cmd = ["git", "-c", "core.longpaths=true", "-C", target_dir, "pull"]
+                        cmd = ["git", "-c", "core.longpaths=true", "-C", target_dir, "pull", "--progress"]
                     else:
                         self.log_to_terminal(f"   [GİT KLONLA] {pkg_id} indiriliyor -> {target_dir}")
                         # core.longpaths: Windows'ta 260 karakter yol sınırı hatasını önler
-                        cmd = ["git", "-c", "core.longpaths=true", "clone", "--depth", "1", pkg_id, target_dir]
+                        cmd = ["git", "-c", "core.longpaths=true", "clone", "--progress", "--depth", "1", pkg_id, target_dir]
 
-                    self.current_process = subprocess.Popen(
-                        cmd,
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.STDOUT,
-                        text=True,
-                        encoding="utf-8",
-                        errors="replace",
-                        creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0
-                    )
-                    for line in iter(self.current_process.stdout.readline, ""):
-                        clean_line = line.strip()
-                        if clean_line:
-                            self.log_to_terminal(f"   {clean_line}")
-                    self.current_process.stdout.close()
-                    return_code = self.current_process.wait()
-                    self.current_process = None
+                    return_code = self._run_streamed(cmd, idx, total, pname)
 
                     # Eğer requirements.txt varsa bağımlılıkları yükle
                     req_file = os.path.join(target_dir, "requirements.txt")
                     if return_code == 0 and os.path.exists(req_file) and not self.cancel_requested:
                         self.log_to_terminal("   [PIP BAĞIMLILIKLARI] requirements.txt kuruluyor...")
-                        pip_cmd = [self.python_cmd, "-m", "pip", "install", "-r", req_file, "--no-warn-script-location"]
-                        self.current_process = subprocess.Popen(
-                            pip_cmd,
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.STDOUT,
-                            text=True,
-                            encoding="utf-8",
-                            errors="replace",
-                            creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0
-                        )
-                        for line in iter(self.current_process.stdout.readline, ""):
-                            clean_line = line.strip()
-                            if clean_line:
-                                self.log_to_terminal(f"   {clean_line}")
-                        self.current_process.stdout.close()
-                        self.current_process.wait()
-                        self.current_process = None
+                        pip_cmd = [self.python_cmd, "-m", "pip", "install", "-r", req_file,
+                                   "--no-warn-script-location"] + self._pip_progress_args()
+                        self._run_streamed(pip_cmd, idx, total, pname)
 
                     # Başlatıcı .bat dosyası oluştur
                     launcher_script = p.get("launcher_cmd")
@@ -1418,6 +1635,7 @@ class SuperInstallerApp:
                         total_sz = resp.getheader("Content-Length")
                         total_bytes = int(total_sz) if total_sz and total_sz.isdigit() else 0
                         dl_bytes = 0
+                        meter = DownloadMeter()
                         while True:
                             if self.cancel_requested:
                                 break
@@ -1426,10 +1644,11 @@ class SuperInstallerApp:
                                 break
                             out_f.write(chunk)
                             dl_bytes += len(chunk)
-                            if total_bytes > 0:
-                                pct = int(dl_bytes * 100 / total_bytes)
-                                if dl_bytes % (65536 * 16) == 0 or dl_bytes == total_bytes:
-                                    self.log_to_terminal(f"   İlerleme: %{pct} ({dl_bytes // 1048576} MB / {total_bytes // 1048576} MB)")
+                            self._feed_meter(meter, {"done": dl_bytes, "total": total_bytes or None,
+                                                     "pct": None, "name": None, "start": False},
+                                             idx, total, pname)
+                        if meter.active and not self.cancel_requested:
+                            self._show_download(None, meter.finish_text(), idx, total, pname)
 
                     if not self.cancel_requested:
                         self.log_to_terminal(f"   [ZIP AÇILIYOR] {target_dir} dizinine çıkartılıyor...")
@@ -1465,22 +1684,7 @@ class SuperInstallerApp:
                         "--accept-package-agreements",
                         "--disable-interactivity"
                     ]
-                    self.current_process = subprocess.Popen(
-                        cmd,
-                        stdout=subprocess.PIPE,
-                        stderr=subprocess.STDOUT,
-                        text=True,
-                        encoding="utf-8",
-                        errors="replace",
-                        creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0
-                    )
-                    for line in iter(self.current_process.stdout.readline, ""):
-                        clean_line = line.strip()
-                        if clean_line:
-                            self.log_to_terminal(f"   {clean_line}")
-                    self.current_process.stdout.close()
-                    return_code = self.current_process.wait()
-                    self.current_process = None
+                    return_code = self._run_streamed(cmd, idx, total, pname)
 
                 elapsed = int(time.time() - start_t)
 
